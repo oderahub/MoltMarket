@@ -1,0 +1,23 @@
+# Render deployment configuration for MoltMarket Backend
+services:
+  - type: web
+    name: moltmarket-api
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: STACKS_NETWORK
+        sync: false
+      - key: PLATFORM_ADDRESS
+        sync: false
+      - key: PLATFORM_FEE_PERCENT
+        sync: false
+      - key: PLATFORM_PRIVATE_KEY
+        sync: false
+      - key: FACILITATOR_URL
+        sync: false
+    healthCheckPath: /health
