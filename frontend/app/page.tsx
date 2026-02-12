@@ -8,7 +8,7 @@ import BountyBoard from '@/components/BountyBoard';
 import OperatorConnect from '@/components/OperatorConnect';
 import { NETWORK, PLATFORM_ADDRESS, getExplorerTxUrl } from '@/lib/stacks';
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 type Skill = {
   id: string;
