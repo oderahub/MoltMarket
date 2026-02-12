@@ -1,0 +1,39 @@
+{
+  "name": "moltmarket",
+  "version": "1.0.0",
+  "description": "x402-powered agent skills marketplace on Stacks — enabling the Moltbot/OpenClaw economy",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "client:discover": "node scripts/client-discover.js",
+    "client:pay": "node scripts/client-pay-for-skill.js",
+    "client:demo": "node scripts/demo-full-flow.js",
+    "setup:wallets": "node scripts/setup-wallets.js",
+    "test": "node test/run-tests.js",
+    "negotiate": "node scripts/demo-negotiation.js"
+  },
+  "dependencies": {
+    "@stacks/network": "^7.2.0",
+    "@stacks/transactions": "^7.3.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "express": "^4.21.0",
+    "ws": "^8.19.0",
+    "x402-stacks": "^2.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "x402",
+    "stacks",
+    "moltbot",
+    "openclaw",
+    "agent-economy",
+    "micropayments",
+    "http-402"
+  ],
+  "license": "MIT"
+}
