@@ -16,6 +16,7 @@ export default function BountyBoard({ onNegotiate }: { onNegotiate: (newPrice: n
   const [bounty, setBounty] = useState<Bounty | null>(null);
   const [reward, setReward] = useState(5000);
   const [status, setStatus] = useState("AWAITING OPERATOR");
+  const [isFlashing, setIsFlashing] = useState(false);
 
   // Fetch or create bounty on mount
   useEffect(() => {
@@ -68,6 +69,11 @@ export default function BountyBoard({ onNegotiate }: { onNegotiate: (newPrice: n
         setReward(newPrice);
         setBounty(updated);
         setStatus("NEGOTIATION VERIFIED");
+        
+        // Trigger Flash
+        setIsFlashing(true);
+        setTimeout(() => setIsFlashing(false), 800);
+        
         onNegotiate(newPrice);
       } catch (err) {
         setStatus("NEGOTIATION FAILED");
@@ -80,7 +86,7 @@ export default function BountyBoard({ onNegotiate }: { onNegotiate: (newPrice: n
       <h2 className="text-[10px] text-white/40 mb-4 flex items-center gap-2 tracking-[0.2em]">
         <Search size={14} /> ACTIVE BOUNTY LEDGER
       </h2>
-      <div className="bg-terminal border border-terminal-border rounded-none overflow-hidden">
+      <div className={`bg-terminal border border-terminal-border rounded-none overflow-hidden transition-colors duration-500 ${isFlashing ? 'bg-green-500/20 border-green-500' : ''}`}>
         <div className="p-4 border-b border-terminal-border flex justify-between items-center bg-white/[0.02]">
           <div>
             <h3 className="text-sm font-bold uppercase tracking-tight">
@@ -91,7 +97,7 @@ export default function BountyBoard({ onNegotiate }: { onNegotiate: (newPrice: n
             </p>
           </div>
           <div className="text-right">
-            <div className={`text-lg font-bold tabular-nums transition-all duration-700 ${reward > 5000 ? 'text-green-400 scale-110' : 'text-stacks'}`}>
+            <div className={`text-lg font-bold tabular-nums transition-all duration-700 ${reward > 5000 ? 'text-green-400 scale-125' : 'text-stacks'}`}>
               {reward} <span className="text-[10px] opacity-50 uppercase">μSTX</span>
             </div>
             <button
@@ -108,7 +114,7 @@ export default function BountyBoard({ onNegotiate }: { onNegotiate: (newPrice: n
             </button>
           </div>
         </div>
-        <div className="p-3 flex justify-between items-center bg-black/40">
+        <div className={`p-3 flex justify-between items-center bg-black/40 transition-colors duration-500 ${isFlashing ? 'bg-green-500/10' : ''}`}>
           <div className="flex items-center gap-2">
             <div className={`w-1.5 h-1.5 rounded-full ${reward > 5000 ? 'bg-green-500' : 'bg-stacks animate-pulse'}`} />
             <span className="text-[9px] text-white/30 uppercase tracking-widest">Priority Execution Level: High</span>
