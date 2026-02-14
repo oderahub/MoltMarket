@@ -98,3 +98,20 @@ server.listen(config.port, config.host, () => {
   console.log("   WS   /ws                  — Live log stream (UI terminal)");
   console.log("");
 });
+
+// Keep-alive mechanism for Render free tier (prevents sleep after 15min inactivity)
+if (process.env.NODE_ENV === 'production') {
+  const SELF_PING_INTERVAL = 10 * 60 * 1000; // 10 minutes
+  const DEPLOYED_URL = process.env.RENDER_EXTERNAL_URL || 'https://moltmarket-api.onrender.com';
+
+  setInterval(async () => {
+    try {
+      const response = await fetch(`${DEPLOYED_URL}/health`);
+      log.info("KeepAlive", `Self-ping successful: ${response.status}`);
+    } catch (error) {
+      log.error("KeepAlive", `Self-ping failed: ${error.message}`);
+    }
+  }, SELF_PING_INTERVAL);
+
+  log.success("KeepAlive", `Started (pinging every ${SELF_PING_INTERVAL / 1000 / 60} min)`);
+}
