@@ -23,29 +23,8 @@ export default function OperatorConnect({ onLog, onConnect }: OperatorConnectPro
   const [addr, setAddr] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Check if already connected on mount
-  useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        // Try direct provider first
-        const provider = window.LeatherProvider || window.StacksProvider;
-        if (provider) {
-          const response = await provider.request('getAddresses') as { addresses: Array<{ address: string }> };
-          const stxAddr = response.addresses?.find((a) =>
-            a.address.startsWith('ST') || a.address.startsWith('SP')
-          );
-          if (stxAddr) {
-            const shortAddr = `${stxAddr.address.slice(0, 6)}...${stxAddr.address.slice(-4)}`;
-            setAddr(shortAddr);
-            onConnect?.(stxAddr.address);
-          }
-        }
-      } catch {
-        // Not connected, that's fine
-      }
-    };
-    checkConnection();
-  }, [onConnect]);
+  // Wallet connection is MANUAL ONLY - triggered by user clicking "Connect Wallet"
+  // Do NOT auto-check on mount as provider.request() requires user approval
 
   const auth = async () => {
     setIsConnecting(true);
