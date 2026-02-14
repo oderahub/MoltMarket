@@ -2,7 +2,7 @@
  * ledger.js — Revenue tracking with JSON file persistence.
  *
  * UPGRADED: Ledger now persists to ledger.json so data survives
- * server restarts. Uses synchronous writes for simplicity (fine for MVP).
+ * server restarts. Uses synchronous writes for simplicity.
  *
  * Tracks all incoming payments and outgoing provider distributions.
  * Multi-hop flow: Agent → Platform (full) → Platform keeps fee → Pays providers

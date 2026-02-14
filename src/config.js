@@ -24,6 +24,15 @@ const config = {
       ? "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token"
       : "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token"),
 
+  // USDCx contract addresses (Circle xReserve - SIP-010 token)
+  // Mainnet: SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx
+  // Testnet: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx
+  usdcxContract:
+    process.env.USDCX_CONTRACT ||
+    (process.env.STACKS_NETWORK === "mainnet"
+      ? "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx"
+      : "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx"),
+
   // Platform wallet
   platformPrivateKey: process.env.PLATFORM_PRIVATE_KEY || "",
   platformAddress: process.env.PLATFORM_ADDRESS || "",

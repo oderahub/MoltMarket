@@ -205,10 +205,11 @@ const SKILLS = [
     category: "bitcoin-intelligence",
     price: "10000", // 10000 microSTX = 0.01 STX (premium)
     asset: "STX",
-    // Multi-asset pricing: agents can pay in STX or sBTC
+    // Multi-asset pricing: agents can pay in STX, sBTC, or USDCx
     acceptedAssets: [
       { asset: "STX", amount: "10000", display: "0.01 STX" },
-      { asset: "sBTC", amount: "1000", display: "1,000 sats" }, // ~0.00001 BTC
+      { asset: "sBTC", amount: "1000", display: "1,000 sats" },
+      { asset: "USDCx", amount: "10000", display: "0.01 USDCx" },
     ],
     preview:
       "Free preview: Alpha signals detected. Pay in STX or sBTC to reveal " +
@@ -303,10 +304,11 @@ const SKILLS = [
     category: "bounty-orchestration",
     price: "8000", // 8000 microSTX = 0.008 STX
     asset: "STX",
-    // Multi-asset pricing: agents can pay in STX or sBTC
+    // Multi-asset pricing: agents can pay in STX, sBTC, or USDCx
     acceptedAssets: [
       { asset: "STX", amount: "8000", display: "0.008 STX" },
-      { asset: "sBTC", amount: "800", display: "800 sats" }, // ~0.000008 BTC
+      { asset: "sBTC", amount: "800", display: "800 sats" },
+      { asset: "USDCx", amount: "8000", display: "0.008 USDCx" },
     ],
     preview:
       "Free preview: Submit any on-chain query as a bounty. Pay in STX or sBTC. " +
@@ -589,4 +591,54 @@ export function resolveProviders(providers) {
     address: config.providers[p.addressKey]?.address || "",
     sharePercent: p.sharePercent,
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Agent Trust & Reputation System
+// ---------------------------------------------------------------------------
+
+const agentTrust = new Map();
+
+// Pre-seed demo agents with high trust scores
+agentTrust.set("demo-agent-a", 850);
+agentTrust.set("demo-agent-b", 980);
+
+/**
+ * Get trust score for an agent address.
+ * Default is 500 (neutral). Range: 0-1000.
+ */
+export function getTrustScore(address) {
+  return agentTrust.get(address) || 500;
+}
+
+/**
+ * Update trust score after bounty completion.
+ * +50 for successful completion, -100 for failure/dispute.
+ */
+export function updateTrustScore(address, success = true) {
+  const current = getTrustScore(address);
+  const delta = success ? 50 : -100;
+  const newScore = Math.max(0, Math.min(1000, current + delta));
+  agentTrust.set(address, newScore);
+  log.info("Trust", `Agent ${address.slice(0, 12)}... trust updated: ${success ? '+50' : '-100'} (now ${newScore})`);
+  return newScore;
+}
+
+/**
+ * Get trust tier label based on score.
+ */
+export function getTrustTier(score) {
+  if (score >= 900) return "ELITE";
+  if (score >= 700) return "TRUSTED";
+  if (score >= 500) return "NEUTRAL";
+  if (score >= 300) return "CAUTION";
+  return "UNTRUSTED";
+}
+
+/**
+ * Set trust score directly (for demos).
+ */
+export function setTrustScore(address, score) {
+  agentTrust.set(address, Math.max(0, Math.min(1000, score)));
+  return agentTrust.get(address);
 }
