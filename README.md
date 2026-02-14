@@ -157,6 +157,25 @@ npm run client:pay       # Pay for skill (agent simulation)
 npm run negotiate        # Dynamic negotiation demo
 ```
 
+### 6. Start the Terminal UI (Next.js)
+
+The project includes a full Bloomberg-style terminal interface.
+
+```bash
+# In a new terminal window:
+cd frontend
+npm install
+
+# Setup environment (points to localhost backend)
+# Create .env.local via echo or copy from .env.production
+echo "NEXT_PUBLIC_API_URL=http://localhost:3000" > .env.local
+
+# Build & Start
+npm run build
+npm start
+# Visit http://localhost:3001
+```
+
 ### Verify It Works
 
 ```bash

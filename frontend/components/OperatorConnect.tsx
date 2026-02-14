@@ -59,14 +59,15 @@ export default function OperatorConnect({ onLog, onConnect }: OperatorConnectPro
         onLog('Leather wallet detected, requesting addresses...', 'info');
 
         // Direct wallet request - this will prompt the user to connect
-        const response = await provider.request('getAddresses') as {
-          addresses: Array<{ address: string; symbol?: string }>
-        };
+        const rawResponse = await provider.request('getAddresses') as any;
+        
+        // Handle JSON-RPC format (result.addresses) or legacy format (addresses)
+        const addresses = rawResponse.result?.addresses || rawResponse.addresses || [];
 
-        onLog(`Got ${response.addresses?.length || 0} addresses`, 'info');
+        onLog(`Got ${addresses.length} addresses`, 'info');
 
         // Find STX address (testnet starts with ST, mainnet with SP)
-        const stxAddr = response.addresses?.find((a) =>
+        const stxAddr = addresses.find((a: any) =>
           a.address.startsWith('ST') || a.address.startsWith('SP')
         );
 
