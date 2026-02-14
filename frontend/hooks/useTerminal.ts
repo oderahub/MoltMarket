@@ -16,7 +16,7 @@ export function useTerminal() {
       type,
       ts: new Date().toLocaleTimeString(),
     };
-    setLogs((prev) => [...prev, newLog].slice(-100));
+    setLogs((prev) => [...prev, newLog].slice(-1000));
   }, []);
 
   useEffect(() => {
