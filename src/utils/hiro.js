@@ -411,6 +411,45 @@ export async function getAlphaSignals() {
  * Chain activity snapshot: blocks, mempool, and network stats.
  * This is the REAL on-chain data for the alpha-signal skill.
  */
+// ---------------------------------------------------------------------------
+// SIP-010 Token helpers (used by treasury.js)
+// ---------------------------------------------------------------------------
+
+/**
+ * Get specific SIP-010 token balance by contract identifier.
+ * @param {string} address - Stacks address to query
+ * @param {string} tokenContract - Contract identifier (e.g., "SP4SZE...::ststxbtc-token")
+ * @returns {Promise<string>} Balance as string (raw units)
+ */
+export async function getTokenBalance(address, tokenContract) {
+  const balances = await getFullBalances(address);
+  const ftTokens = balances.fungible_tokens || {};
+
+  const tokenKey = Object.keys(ftTokens).find((key) =>
+    key.startsWith(tokenContract)
+  );
+
+  return tokenKey ? ftTokens[tokenKey].balance : "0";
+}
+
+/**
+ * Check if address has any StackingDAO positions (stSTX or stSTXbtc).
+ * @param {string} address - Stacks address to query
+ * @returns {Promise<boolean>} True if address has StackingDAO positions
+ */
+export async function hasStackingDAOPosition(address) {
+  const balances = await getFullBalances(address);
+  const ftTokens = balances.fungible_tokens || {};
+
+  return Object.keys(ftTokens).some(
+    (key) => key.includes("ststx") || key.includes("stacking-dao")
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Composite analysis functions (used by skills)
+// ---------------------------------------------------------------------------
+
 export async function getChainSnapshot() {
   const [chainInfo, blocks, mempool, recentTxs] = await Promise.all([
     getChainInfo(),

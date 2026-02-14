@@ -5,14 +5,6 @@
  * - WebSocket logging (broadcasts to UI terminal)
  * - Multi-asset pricing (STX + sBTC on same endpoint)
  * - Dynamic pricing for negotiated bounties
- *
- * Usage:
- *   import { paymentGate } from "./middleware/paymentGate.js";
- *
- *   app.post("/skills/:id/execute",
- *     paymentGate({ price: "5000", description: "Profile Auditor" }),
- *     (req, res) => { ... }
- *   );
  */
 
 import {
@@ -61,12 +53,29 @@ export function paymentGate({ price, description = "", asset = "STX", acceptedAs
 
   // Wrap with MoltMarket extensions (logging, multi-asset, direct txid)
   return async (req, res, next) => {
-    // Check for DIRECT TXID proof (bypasses facilitator)
+    // Check for YIELD PAYMENT (StackingDAO yield-powered)
+    const yieldPayment = req.headers["x-yield-payment"];
+    if (yieldPayment) {
+      log.success("x402", `[YIELD_ENGINE] Yield payment accepted: ${yieldPayment}`);
+
+      // Attach payment info for yield payment
+      req.x402 = {
+        txid: yieldPayment,
+        amount: price,
+        asset: "sBTC-yield",
+        payer: "yield-engine",
+        explorerUrl: null,
+        yieldPowered: true,
+      };
+      return next();
+    }
+
+    // Check for DIRECT TXID proof 
     const directTxid = req.headers["x-payment-txid"];
     if (directTxid) {
       log.info("x402", `Direct txid proof received: ${directTxid}`);
 
-      // Verify txid exists on chain (optional but recommended)
+      // Verify txid exists on chain
       try {
         const verifyUrl = `https://api.${config.stacksNetwork === "mainnet" ? "" : "testnet."}hiro.so/extended/v1/tx/${directTxid}`;
         const verifyRes = await fetch(verifyUrl);
@@ -172,6 +181,15 @@ function handleMultiAsset402(req, res, { description, acceptedAssets }) {
       base.extra = {
         tokenContract: sbtcContract,
         name: "sBTC",
+      };
+    }
+
+    // Add USDCx contract info (Circle xReserve)
+    if (opt.asset === "USDCx") {
+      base.extra = {
+        tokenContract: config.usdcxContract,
+        name: "USDCx",
+        decimals: 6,
       };
     }
 

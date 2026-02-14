@@ -33,6 +33,9 @@ import {
   listBounties,
   getBounty,
   updateBounty,
+  getTrustScore,
+  getTrustTier,
+  updateTrustScore,
 } from "../services/skills.js";
 import {
   recordIncomingPayment,
@@ -40,6 +43,13 @@ import {
   getLedger,
   getLedgerSummary,
 } from "../services/ledger.js";
+import {
+  getTreasurySummary,
+  getSimulatedYield,
+  accrueSimulatedYield,
+  spendSimulatedYield,
+  STACKING_DAO,
+} from "../services/treasury.js";
 import config from "../config.js";
 import log from "../utils/logger.js";
 
@@ -299,6 +309,111 @@ router.get("/ledger", (req, res) => {
 
 router.get("/ledger/summary", (req, res) => {
   res.json(getLedgerSummary());
+});
+
+// ---------------------------------------------------------------------------
+// TREASURY ENDPOINTS — StackingDAO yield tracking
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /treasury/:address — Get treasury summary (stSTXbtc + sBTC rewards)
+ */
+router.get("/treasury/:address", async (req, res) => {
+  try {
+    const summary = await getTreasurySummary(req.params.address);
+    res.json(summary);
+  } catch (err) {
+    log.error("API", `Treasury fetch failed: ${err.message}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /treasury/yield/simulated — Get simulated yield balance (for demo)
+ */
+router.get("/treasury/yield/simulated", (req, res) => {
+  res.json({
+    yieldSats: getSimulatedYield(),
+    source: "simulated",
+    cycle: 114,
+    contracts: STACKING_DAO,
+  });
+});
+
+/**
+ * POST /treasury/yield/accrue — Simulate yield accrual
+ */
+router.post("/treasury/yield/accrue", (req, res) => {
+  const newYield = accrueSimulatedYield(req.body?.amount);
+  res.json({ yieldSats: newYield });
+});
+
+/**
+ * POST /treasury/yield/spend — Spend yield for x402 payment
+ */
+router.post("/treasury/yield/spend", (req, res) => {
+  const { amount } = req.body || {};
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ error: "Invalid amount" });
+  }
+
+  const result = spendSimulatedYield(amount);
+
+  if (result.success) {
+    log.success("Treasury", `Yield spent: ${amount} sats (${result.remaining} remaining)`);
+    res.json({
+      success: true,
+      spent: amount,
+      remaining: result.remaining,
+      txType: "yield-payment",
+    });
+  } else {
+    res.status(400).json({
+      success: false,
+      error: "Insufficient yield",
+      available: result.remaining,
+      needed: result.needed,
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// TRUST & REPUTATION ENDPOINTS
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /trust/:address — Get agent trust score and tier
+ */
+router.get("/trust/:address", (req, res) => {
+  const score = getTrustScore(req.params.address);
+  const tier = getTrustTier(score);
+  res.json({
+    address: req.params.address,
+    score,
+    tier,
+    description: `${tier} tier agent with ${score}/1000 trust score`,
+  });
+});
+
+/**
+ * POST /demo/log — Broadcast a log message to WebSocket clients
+ * Used by demo scripts to send step-by-step updates to frontend
+ */
+router.post("/demo/log", (req, res) => {
+  const { step, type, message, data } = req.body;
+  if (!message) {
+    return res.status(400).json({ error: "Message required" });
+  }
+
+  // Use appropriate log type
+  const logType = type || "info";
+  if (log[logType]) {
+    log[logType]("DEMO", message, data);
+  } else {
+    log.info("DEMO", message, data);
+  }
+
+  res.json({ success: true, step, broadcasted: true });
 });
 
 // ---------------------------------------------------------------------------

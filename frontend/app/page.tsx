@@ -6,6 +6,7 @@ import { useTerminal } from '@/hooks/useTerminal';
 import SkillCard from '@/components/SkillCard';
 import BountyBoard from '@/components/BountyBoard';
 import OperatorConnect from '@/components/OperatorConnect';
+import AgentTreasury from '@/components/AgentTreasury';
 import { NETWORK, PLATFORM_ADDRESS, getExplorerTxUrl } from '@/lib/stacks';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -26,6 +27,8 @@ export default function BloombergTerminal() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [demoRunning, setDemoRunning] = useState(false);
+  const [yieldSats, setYieldSats] = useState(1420);
+  const [stakedAmount] = useState(1250);
 
   // Fetch skills from backend on mount
   useEffect(() => {
@@ -40,6 +43,14 @@ export default function BloombergTerminal() {
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
+
+  // Simulate yield accumulation from StackingDAO
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setYieldSats(prev => prev + Math.floor(Math.random() * 3) + 1);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Parse price string to microSTX (e.g., "0.005 STX" -> 5000)
   const parsePriceToMicroSTX = (priceStr: string): number => {
@@ -58,16 +69,24 @@ export default function BloombergTerminal() {
   };
 
   // Execute skill with payment proof after signing
-  const executeWithPayment = async (skillId: string, txId: string) => {
+  const executeWithPayment = async (skillId: string, txId: string, isYieldPayment = false) => {
     addLog(`Submitting payment proof to backend...`, 'system');
 
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Use appropriate header based on payment type
+      if (isYieldPayment) {
+        headers['X-Yield-Payment'] = txId;
+      } else {
+        headers['X-402-Payment'] = txId;
+      }
+
       const res = await fetch(`${API_BASE}/skills/${skillId}/execute`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-402-Payment': txId,
-        },
+        headers,
       });
 
       if (res.ok) {
@@ -84,8 +103,51 @@ export default function BloombergTerminal() {
     }
   };
 
+  // Execute skill with yield payment (no wallet needed)
+  const executeWithYield = async (skillId: string, priceSats: number): Promise<boolean> => {
+    if (yieldSats < priceSats) {
+      addLog(`[YIELD_ENGINE] Insufficient yield (${yieldSats}/${priceSats} sats)`, 'error');
+      return false;
+    }
+
+    addLog(`[YIELD_ENGINE] Checking accrued rewards...`, 'system');
+    addLog(`[STACKING_DAO] Cycle 114 yield available: ${yieldSats} sats`, 'info');
+
+    try {
+      const res = await fetch(`${API_BASE}/treasury/yield/spend`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: priceSats }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setYieldSats(data.remaining);
+        addLog(`[STACKING_DAO] Routing ${priceSats} sats to x402...`, 'agent');
+        addLog(`[SUCCESS] Skill unlocked via yield. Principal preserved.`, 'success');
+        return true;
+      }
+    } catch (err) {
+      addLog(`[YIELD_ENGINE] Spend failed: ${err}`, 'error');
+    }
+    return false;
+  };
+
   // Real executeSkill function with wallet signing
   const executeSkill = async (skillId: string, price: string) => {
+    // Check if sBTC-priced and can pay with yield
+    if (price.toLowerCase().includes('sat')) {
+      const priceSats = parseInt(price.match(/\d+/)?.[0] || '0');
+      if (priceSats > 0 && yieldSats >= priceSats) {
+        addLog(`[YIELD_ENGINE] sBTC skill detected. Attempting yield payment...`, 'agent');
+        const success = await executeWithYield(skillId, priceSats);
+        if (success) {
+          await executeWithPayment(skillId, `yield-payment-${Date.now()}`, true);
+          return;
+        }
+      }
+    }
+
     if (!walletAddress) {
       addLog('ERROR: Connect wallet first', 'error');
       return;
@@ -236,6 +298,7 @@ export default function BloombergTerminal() {
             {skills.length > 0 ? (
               skills.map((skill) => {
                 const hasSbtc = skill.acceptedAssets?.some(a => a.asset === 'sBTC');
+                const hasUsdcx = skill.acceptedAssets?.some(a => a.asset === 'USDCx');
                 const displayPrice = hasSbtc
                   ? skill.acceptedAssets.find(a => a.asset === 'sBTC')?.display || skill.priceSTX
                   : skill.priceSTX;
@@ -246,6 +309,7 @@ export default function BloombergTerminal() {
                     desc={skill.description.slice(0, 60) + '...'}
                     price={displayPrice}
                     isSbtc={hasSbtc}
+                    isUsdcx={hasUsdcx}
                     onExecute={() => executeSkill(skill.id, displayPrice)}
                   />
                 );
@@ -258,6 +322,7 @@ export default function BloombergTerminal() {
             )}
           </div>
           <BountyBoard onNegotiate={handleNegotiate} />
+          <AgentTreasury yieldSats={yieldSats} stakedAmount={stakedAmount} />
         </div>
 
         {/* Right 40% - Terminal */}
@@ -267,30 +332,54 @@ export default function BloombergTerminal() {
             <span className="text-[10px] text-white/40 uppercase tracking-[0.2em]">Autonomous Agent Stream</span>
           </div>
           <div className="flex-1 p-6 overflow-y-auto space-y-3">
-            {logs.map((log, i) => (
-              <div key={i} className={`text-[11px] leading-relaxed break-all ${
-                log.type === 'agent' ? 'text-blue-400' :
-                log.type === 'success' ? 'text-green-400' :
-                log.type === 'error' ? 'text-red-400' : 'text-white/60'
-              }`}>
-                <span className="opacity-30 mr-3 text-[9px] tabular-nums">[{log.ts}]</span>
-                {log.message.startsWith('Explorer:') ? (
-                  <>
-                    Explorer:{' '}
-                    <a
-                      href={log.message.replace('> Explorer: ', '')}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-stacks hover:underline"
-                    >
-                      {log.message.replace('> Explorer: ', '')}
-                    </a>
-                  </>
-                ) : (
-                  log.message
-                )}
-              </div>
-            ))}
+            {logs.map((log, i) => {
+              // Check if this is a STEP indicator
+              const isStep = log.message.includes('[STEP');
+              // Check if this contains an explorer link
+              const hasExplorerLink = log.message.includes('explorer.hiro.so');
+              const explorerMatch = log.message.match(/https:\/\/explorer\.hiro\.so[^\s]*/);
+
+              return (
+                <div
+                  key={i}
+                  className={`text-[11px] leading-relaxed break-all ${
+                    isStep ? 'bg-stacks/20 border-l-4 border-stacks px-3 py-2 my-2 font-bold' :
+                    log.type === 'agent' ? 'text-blue-400' :
+                    log.type === 'success' ? 'text-green-400' :
+                    log.type === 'error' ? 'text-red-400' : 'text-white/60'
+                  }`}
+                >
+                  <span className="opacity-30 mr-3 text-[9px] tabular-nums">[{log.ts}]</span>
+                  {hasExplorerLink && explorerMatch ? (
+                    <>
+                      {log.message.replace(explorerMatch[0], '')}
+                      <a
+                        href={explorerMatch[0]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-stacks underline font-bold animate-pulse inline-block ml-1"
+                      >
+                        🔗 VERIFY ON-CHAIN ←
+                      </a>
+                    </>
+                  ) : log.message.startsWith('Explorer:') ? (
+                    <>
+                      Explorer:{' '}
+                      <a
+                        href={log.message.replace('Explorer: ', '')}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-stacks underline font-bold animate-pulse"
+                      >
+                        🔗 {log.message.replace('Explorer: ', '')} ← CLICK TO VERIFY
+                      </a>
+                    </>
+                  ) : (
+                    log.message
+                  )}
+                </div>
+              );
+            })}
             <div ref={terminalEndRef} />
           </div>
         </div>
@@ -300,12 +389,13 @@ export default function BloombergTerminal() {
       <footer className="h-8 bg-stacks text-black flex items-center overflow-hidden text-[10px] font-bold">
         <div className="whitespace-nowrap animate-marquee flex gap-12">
           <span>LATEST SETTLEMENT: 0x71a2... CONFIRMED</span>
-          <span>WHALE ALERT: 50K STX MOVED FROM BINANCE</span>
+          <span>STACKING_DAO: CYCLE 114 REWARDS DISTRIBUTED</span>
+          <span>YIELD POOL: 2.4M stSTXbtc STAKED</span>
           <span>NEGOTIATION COMPLETED: BOUNTY #104 - 8000 STX</span>
           <span>SBTC/STX PAIR VOLUME UP 14%</span>
           <span>HIRO API LATENCY: 142MS</span>
           <span>x402-STACKS PROTOCOL ACTIVE</span>
-          <span>LATEST SETTLEMENT: 0x71a2... CONFIRMED</span>
+          <span>YIELD ENGINE: AGENTS SELF-FUNDING VIA LIQUID STAKING</span>
         </div>
       </footer>
     </div>
