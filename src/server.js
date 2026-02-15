@@ -34,11 +34,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Request logging
+// Logging middleware
 app.use((req, res, next) => {
+  if (req.path === '/health') return next(); // skip logging
   log.info("HTTP", `${req.method} ${req.path}`);
   next();
 });
+
 
 // Mount all API routes
 app.use("/", apiRouter);
