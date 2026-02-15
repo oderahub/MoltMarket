@@ -20,7 +20,11 @@ export function useTerminal() {
   }, []);
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:3000/ws');
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+    const wsProtocol = baseUrl.startsWith('https') ? 'wss' : 'ws';
+    const wsUrl = `${wsProtocol}://${baseUrl.replace(/^https?:\/\//, '')}/ws`;
+
+    const ws = new WebSocket(wsUrl);
 
     ws.onmessage = (event) => {
       try {
