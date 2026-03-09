@@ -56,6 +56,10 @@ function parseJson(text: string) {
   }
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
 function toAbsoluteUrl(value: string | null | undefined) {
   if (!value) return null;
 
@@ -116,6 +120,29 @@ function buildNarration(body: Record<string, unknown> | null) {
       null,
     explorerReady: Boolean(payment?.explorerUrl),
   };
+}
+
+function getAcceptedProofHeaders(source: unknown): string[] {
+  if (!isRecord(source)) return [];
+
+  const settlement = isRecord(source.settlement) ? source.settlement : null;
+  const rawHeaders = settlement?.acceptedProofHeaders ?? source.acceptedProofHeaders;
+  if (!Array.isArray(rawHeaders)) return [];
+
+  return rawHeaders.filter((value): value is string => typeof value === 'string' && value.length > 0);
+}
+
+function describeProofHeader(name: string) {
+  switch (name) {
+    case 'payment-signature':
+      return 'Base64-encoded x402 payment payload from a signed transaction.';
+    case 'x-payment-txid':
+      return 'Direct Stacks txid proof accepted by the Express backend.';
+    case 'x-yield-payment':
+      return 'Yield-engine marker for sBTC-yield-backed demo flows.';
+    default:
+      return undefined;
+  }
 }
 
 function buildHeaders(
@@ -181,7 +208,7 @@ function buildIntent({
   };
 }
 
-function buildPaymentContext(executionContext?: ChatExecutionContext) {
+function buildPaymentContext(executionContext?: ChatExecutionContext, acceptedProofHeaderSource?: unknown) {
   const providedHeader = executionContext?.paymentHeader?.name
     ? executionContext.paymentHeader.name
     : executionContext?.txid
@@ -190,22 +217,15 @@ function buildPaymentContext(executionContext?: ChatExecutionContext) {
         ? "x-yield-payment"
         : null;
 
+  const acceptedProofHeaders = getAcceptedProofHeaders(acceptedProofHeaderSource);
+
   return {
     providedHeader,
-    acceptedHeaders: [
-      {
-        name: "payment-signature",
-        description: "Base64-encoded x402 payment payload from a signed transaction.",
-      },
-      {
-        name: "x-payment-txid",
-        description: "Direct Stacks txid proof accepted by the existing Express middleware.",
-      },
-      {
-        name: "x-yield-payment",
-        description: "Yield-engine payment marker for sBTC-yield-backed demo flows.",
-      },
-    ],
+    acceptedProofHeaders,
+    acceptedHeaders: acceptedProofHeaders.map((name) => ({
+      name,
+      description: describeProofHeader(name),
+    })),
   };
 }
 
@@ -240,6 +260,7 @@ export async function executeSkillFlow({
 
     if (response.status === 402) {
       const paymentRequest = body || decodeBase64Json(response.headers.get("payment-required"));
+      const settlement = body?.settlement ?? paymentRequest?.settlement ?? null;
       return {
         status: "payment_required",
         toolName,
@@ -260,12 +281,12 @@ export async function executeSkillFlow({
           },
         ],
         paymentRequest,
-        settlement: body?.settlement ?? paymentRequest?.settlement ?? null,
+        settlement,
         verifiableIntent: body?.verifiableIntent ?? paymentRequest?.verifiableIntent ?? null,
         registry: normalizeRegistry((body?.registry as Record<string, unknown> | undefined) || (paymentRequest?.registry as Record<string, unknown> | undefined) || null),
         transactions: normalizeTransactions(body?.transactions),
         narration: buildNarration(body),
-        paymentContext: buildPaymentContext(executionContext),
+        paymentContext: buildPaymentContext(executionContext, settlement ?? paymentRequest),
         result: null,
       };
     }
@@ -290,7 +311,7 @@ export async function executeSkillFlow({
         registry: normalizeRegistry(body?.registry as Record<string, unknown> | undefined),
         transactions: normalizeTransactions(body?.transactions),
         narration: buildNarration(body),
-        paymentContext: buildPaymentContext(executionContext),
+        paymentContext: buildPaymentContext(executionContext, body?.settlement ?? body),
         error: body || rawBody || `Backend responded with ${response.status}`,
       };
     }
@@ -309,13 +330,13 @@ export async function executeSkillFlow({
           status: "complete",
         },
       ],
-      paymentContext: buildPaymentContext(executionContext),
       payment: body?.payment ?? null,
       settlement: body?.settlement ?? null,
       verifiableIntent: body?.verifiableIntent ?? null,
       registry: normalizeRegistry(body?.registry as Record<string, unknown> | undefined),
       transactions: normalizeTransactions(body?.transactions),
       narration: buildNarration(body),
+      paymentContext: buildPaymentContext(executionContext, body?.settlement ?? body),
       result: body,
     };
   } catch (error) {

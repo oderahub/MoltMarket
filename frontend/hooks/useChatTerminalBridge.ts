@@ -42,7 +42,27 @@ function getOutputError(output: unknown): string | null {
 }
 
 function getAcceptedHeaderNames(output: unknown): string[] {
-  if (!isRecord(output) || !isRecord(output.paymentContext) || !Array.isArray(output.paymentContext.acceptedHeaders)) {
+  if (!isRecord(output)) return [];
+
+  const settlement = isRecord(output.settlement) ? output.settlement : null;
+  const paymentRequest = isRecord(output.paymentRequest) ? output.paymentRequest : null;
+  const paymentRequestSettlement = paymentRequest && isRecord(paymentRequest.settlement)
+    ? paymentRequest.settlement
+    : null;
+
+  const rawHeaderNames =
+    (Array.isArray(settlement?.acceptedProofHeaders) ? settlement.acceptedProofHeaders : null) ??
+    (Array.isArray(paymentRequestSettlement?.acceptedProofHeaders)
+      ? paymentRequestSettlement.acceptedProofHeaders
+      : null);
+
+  if (Array.isArray(rawHeaderNames)) {
+    return rawHeaderNames.filter(
+      (value): value is string => typeof value === 'string' && value.length > 0,
+    );
+  }
+
+  if (!isRecord(output.paymentContext) || !Array.isArray(output.paymentContext.acceptedHeaders)) {
     return [];
   }
 

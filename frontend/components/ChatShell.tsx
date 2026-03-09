@@ -75,7 +75,31 @@ function getUnknownField(output: unknown, field: string): unknown {
 }
 
 function getAcceptedHeaders(output: unknown): Array<{ name: string; description?: string }> {
+  const paymentRequest = getObjectField(output, 'paymentRequest');
   const paymentContext = getObjectField(output, 'paymentContext');
+  const settlement = getObjectField(output, 'settlement');
+  const rawHeaderNames =
+    (Array.isArray(settlement?.acceptedProofHeaders) ? settlement.acceptedProofHeaders : null) ??
+    (Array.isArray(getObjectField(paymentRequest, 'settlement')?.acceptedProofHeaders)
+      ? getObjectField(paymentRequest, 'settlement')?.acceptedProofHeaders
+      : null);
+
+  if (Array.isArray(rawHeaderNames)) {
+    return rawHeaderNames
+      .filter((value): value is string => typeof value === 'string' && value.length > 0)
+      .map((name) => ({
+        name,
+        description:
+          name === 'payment-signature'
+            ? 'Base64-encoded x402 payment payload from a signed transaction.'
+            : name === 'x-payment-txid'
+              ? 'Direct Stacks txid proof accepted by the Express backend.'
+              : name === 'x-yield-payment'
+                ? 'Yield-engine marker for sBTC-yield-backed demo flows.'
+                : undefined,
+      }));
+  }
+
   const headers = paymentContext?.acceptedHeaders;
   if (!Array.isArray(headers)) return [];
 
