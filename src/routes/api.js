@@ -42,7 +42,19 @@ import {
   distributeRevenue,
   getLedger,
   getLedgerSummary,
+  listSettlements,
 } from "../services/ledger.js";
+import {
+  createOrHydrateIntent,
+  failIntent,
+  getIntent,
+  getIntentAttestation,
+  getIntentRegistrySummary,
+  listIntents,
+  markIntentPaymentRequired,
+  completeIntent,
+  recordIntentSettlement,
+} from "../services/intents.js";
 import {
   getTreasurySummary,
   getSimulatedYield,
@@ -52,8 +64,84 @@ import {
 } from "../services/treasury.js";
 import config from "../config.js";
 import log from "../utils/logger.js";
+import {
+  PAYMENT_RESPONSE_HEADER,
+  buildPaymentResponse,
+  getExplorerTxUrl,
+} from "../utils/x402.js";
 
 const router = Router();
+
+function readHeader(req, name) {
+  const value = req.headers[name];
+  return typeof value === "string" ? value : null;
+}
+
+function getRequestedIntentId(req) {
+  return readHeader(req, "x-intent-id") || req.body?.intentId || null;
+}
+
+function getRequestedPaymentMethod(req) {
+  if (readHeader(req, "x-yield-payment")) return "yield-payment";
+  if (readHeader(req, "x-payment-txid")) return "direct-txid";
+  if (readHeader(req, "payment-signature")) return "payment-signature";
+  return null;
+}
+
+function buildRegistryLinks(intentId) {
+  return {
+    intent: `/registry/intents/${intentId}`,
+    attestation: `/registry/intents/${intentId}/attestation`,
+    settlements: `/registry/settlements?intentId=${intentId}`,
+  };
+}
+
+function buildTransactionReferences({ intentId, payment, distributions = [] }) {
+  const references = [];
+
+  if (payment) {
+    references.push({
+      kind: "payment",
+      label: `${payment.asset} execution payment`,
+      txid: payment.txid,
+      asset: payment.asset,
+      amount: payment.amount,
+      explorerUrl: payment.explorerUrl || null,
+      explorerReady: Boolean(payment.explorerUrl),
+      fundingSource: payment.fundingSource || "principal",
+      principalPreserved: Boolean(payment.principalPreserved),
+      proofStatus: payment.proofStatus || null,
+    });
+  }
+
+  for (const distribution of distributions) {
+    references.push({
+      kind: "distribution",
+      label: `Provider payout: ${distribution.name}`,
+      txid: distribution.txid || "",
+      asset: distribution.asset,
+      amount: distribution.amount,
+      explorerUrl: distribution.explorerUrl || null,
+      explorerReady: Boolean(distribution.explorerUrl),
+      status: distribution.status || (distribution.txid ? "broadcasted" : "recorded"),
+      note: distribution.note || null,
+    });
+  }
+
+  references.push({
+    kind: "registry",
+    label: "Intent registry attestation",
+    txid: "",
+    asset: "registry",
+    amount: "0",
+    explorerUrl: null,
+    explorerReady: false,
+    status: "available",
+    registryUrl: `/registry/intents/${intentId}/attestation`,
+  });
+
+  return references;
+}
 
 // ---------------------------------------------------------------------------
 // FREE ENDPOINTS
@@ -84,6 +172,10 @@ router.get("/", (req, res) => {
         "PATCH /bounties/:id": "Update bounty reward/description (dynamic negotiation)",
         "GET /ledger": "View all payment records",
         "GET /ledger/summary": "Payment summary statistics",
+        "GET /registry/intents": "List verifiable execution intents",
+        "GET /registry/intents/:id": "Inspect a specific verifiable intent",
+        "GET /registry/intents/:id/attestation": "Read the testnet-safe attestation envelope for an intent",
+        "GET /registry/settlements": "List recorded ledger settlements",
       },
       paid: {
         "POST /skills/:id/execute":
@@ -98,6 +190,7 @@ router.get("/", (req, res) => {
       step4: "Serialize tx to hex, wrap in x402 payload, base64-encode as payment-signature header",
       step5: "Retry POST /skills/:id/execute with payment-signature header",
       step6: "Receive skill output (REAL on-chain data) + payment-response header with txid",
+      note: "Set x-payment-asset to request sBTC or USDCx quotes; USDCx currently uses x-payment-txid proof.",
     },
     links: {
       explorer: `https://explorer.hiro.so/?chain=${config.stacksNetwork}`,
@@ -139,6 +232,53 @@ router.get("/skills/:id", async (req, res) => {
   });
 });
 
+router.get("/registry/intents", (req, res) => {
+  const intents = listIntents({
+    status: req.query.status || null,
+    skillId: req.query.skillId || null,
+    asset: req.query.asset || null,
+    txid: req.query.txid || null,
+  });
+
+  res.json({
+    count: intents.length,
+    summary: getIntentRegistrySummary(),
+    intents,
+  });
+});
+
+router.get("/registry/intents/:id", (req, res) => {
+  const intent = getIntent(req.params.id);
+  if (!intent) {
+    return res.status(404).json({ error: `Intent '${req.params.id}' not found` });
+  }
+
+  res.json(intent);
+});
+
+router.get("/registry/intents/:id/attestation", (req, res) => {
+  const attestation = getIntentAttestation(req.params.id);
+  if (!attestation) {
+    return res.status(404).json({ error: `Attestation for intent '${req.params.id}' not found` });
+  }
+
+  res.json(attestation);
+});
+
+router.get("/registry/settlements", (req, res) => {
+  const settlements = listSettlements({
+    asset: req.query.asset || null,
+    skillId: req.query.skillId || null,
+    intentId: req.query.intentId || null,
+    txid: req.query.txid || null,
+  });
+
+  res.json({
+    count: settlements.length,
+    settlements,
+  });
+});
+
 // ---------------------------------------------------------------------------
 // PAID ENDPOINT — x402 gated skill execution
 // ---------------------------------------------------------------------------
@@ -153,20 +293,45 @@ router.post(
     }
     req.skill = skill;
 
+    req.intentRecord = createOrHydrateIntent({
+      intentId: getRequestedIntentId(req),
+      skill,
+      input: req.body || {},
+      request: {
+        method: req.method,
+        path: req.originalUrl,
+      },
+      metadata: {
+        requestedAsset: readHeader(req, "x-payment-asset") || req.body?.preferredAsset || null,
+        preferredAsset: req.body?.preferredAsset || null,
+        requestedPaymentMethod: getRequestedPaymentMethod(req),
+      },
+    });
+
+    if (!getRequestedPaymentMethod(req)) {
+      markIntentPaymentRequired(req.intentRecord.id, {
+        paymentRequestPath: req.originalUrl,
+      });
+    }
+
     const gate = paymentGate({
       price: skill.price,
       description: skill.name,
       asset: skill.asset,
       acceptedAssets: skill.acceptedAssets,
+      intentId: req.intentRecord.id,
     });
     gate(req, res, next);
   },
   // Second middleware: execute skill after payment verified
   async (req, res) => {
     const skill = req.skill;
+    const intent = req.intentRecord;
     const payment = req.x402;
+    const registryLinks = buildRegistryLinks(intent.id);
 
     log.success("API", `Skill "${skill.id}" purchased! txid: ${payment.txid}`);
+    const settledIntent = recordIntentSettlement(intent.id, payment);
 
     const input = req.body || {};
 
@@ -176,19 +341,68 @@ router.post(
       output = await skill.execute(input);
     } catch (err) {
       log.error("API", `Skill execution failed: ${err.message}`);
+      const failedIntent = failIntent(intent.id, {
+        error: err.message,
+        paymentTxid: payment.txid,
+        stage: "execute",
+      });
+      res.set(
+        PAYMENT_RESPONSE_HEADER,
+        buildPaymentResponse({
+          success: false,
+          txid: payment.txid,
+          asset: payment.asset,
+          intentId: intent.id,
+          settlementDigest: failedIntent?.verification?.settlementDigest || "",
+          errorReason: err.message,
+        })
+      );
       return res.status(500).json({
         error: "Skill execution failed",
         details: err.message,
-        payment,
+        payment: {
+          ...payment,
+          explorerUrl: payment.explorerUrl || getExplorerTxUrl(payment.txid),
+        },
+        settlement: {
+          asset: payment.asset,
+          method: payment.method,
+          fundingSource: payment.fundingSource || failedIntent?.settlement?.payment?.fundingSource || "principal",
+          principalPreserved: Boolean(
+            payment.principalPreserved ?? failedIntent?.settlement?.payment?.principalPreserved
+          ),
+          proofStatus: payment.proofStatus || failedIntent?.settlement?.payment?.proofStatus || null,
+          selectedQuote: failedIntent?.settlement?.payment?.quote || payment.quote || null,
+        },
+        intent: failedIntent,
+        verifiableIntent: failedIntent?.verifiableIntent || settledIntent?.verifiableIntent || null,
+        registry: registryLinks,
+        transactions: buildTransactionReferences({
+          intentId: intent.id,
+          payment: failedIntent?.settlement?.payment || payment,
+        }),
       });
     }
 
     // Record in ledger
     const ledgerEntry = recordIncomingPayment({
       txid: payment.txid,
-      from: "agent",
+      from: payment.payer || "agent",
       amount: payment.amount,
       skillId: skill.id,
+      asset: payment.asset,
+      intentId: intent.id,
+      settlementMethod: payment.method,
+      settlementDetails: {
+        explorerUrl: payment.explorerUrl,
+        verified: payment.verified !== false,
+        proofStatus: payment.proofStatus || null,
+        fundingSource: payment.fundingSource || "principal",
+        principalPreserved: Boolean(payment.principalPreserved),
+        verificationDetails: payment.verificationDetails || null,
+        quote: payment.quote || null,
+        yieldPowered: Boolean(payment.yieldPowered),
+      },
     });
 
     // Multi-hop revenue distribution
@@ -202,6 +416,7 @@ router.post(
           ledgerEntryId: ledgerEntry.id,
           totalAmount: payment.amount,
           providers,
+          asset: payment.asset,
         });
       } catch (err) {
         log.error("API", `Revenue distribution failed: ${err.message}`);
@@ -211,19 +426,71 @@ router.post(
       log.warn("API", "No provider addresses configured. Skipping distribution.");
     }
 
+    const completedIntent = completeIntent(intent.id, {
+      ledgerEntryId: ledgerEntry.id,
+      paymentTxid: payment.txid,
+      result: output,
+      revenueDistribution: distributions,
+    });
+    const transactions = buildTransactionReferences({
+      intentId: intent.id,
+      payment: completedIntent?.settlement?.payment || payment,
+      distributions,
+    });
+
+    res.set(
+      PAYMENT_RESPONSE_HEADER,
+      buildPaymentResponse({
+        success: true,
+        txid: payment.txid,
+        asset: payment.asset,
+        intentId: intent.id,
+        settlementDigest: completedIntent?.verification?.settlementDigest || "",
+      })
+    );
+
     res.json({
       success: true,
+      intent: {
+        id: intent.id,
+        status: completedIntent?.status || "completed",
+        verification: completedIntent?.verification,
+        registryPath: registryLinks.intent,
+        attestationPath: registryLinks.attestation,
+      },
       skill: { id: skill.id, name: skill.name },
       output,
       payment: {
         txid: payment.txid,
         amount: payment.amount,
-        explorerUrl: payment.explorerUrl,
+        asset: payment.asset,
+        method: payment.method,
+        explorerUrl: completedIntent?.settlement?.payment?.explorerUrl || payment.explorerUrl,
+        fundingSource: completedIntent?.settlement?.payment?.fundingSource || payment.fundingSource || "principal",
+        principalPreserved: Boolean(
+          completedIntent?.settlement?.payment?.principalPreserved ?? payment.principalPreserved
+        ),
+        proofStatus: completedIntent?.settlement?.payment?.proofStatus || payment.proofStatus || null,
+        verificationDetails:
+          completedIntent?.settlement?.payment?.verificationDetails || payment.verificationDetails || null,
+      },
+      settlement: {
+        asset: payment.asset,
+        method: payment.method,
+        fundingSource: completedIntent?.settlement?.payment?.fundingSource || payment.fundingSource || "principal",
+        principalPreserved: Boolean(
+          completedIntent?.settlement?.payment?.principalPreserved ?? payment.principalPreserved
+        ),
+        proofStatus: completedIntent?.settlement?.payment?.proofStatus || payment.proofStatus || null,
+        selectedQuote: completedIntent?.settlement?.payment?.quote || payment.quote || null,
       },
       revenueDistribution: {
         platformFeePercent: config.platformFeePercent,
         distributions,
       },
+      verifiableIntent: completedIntent?.verifiableIntent || settledIntent?.verifiableIntent || null,
+      registry: registryLinks,
+      transactions,
     });
   }
 );

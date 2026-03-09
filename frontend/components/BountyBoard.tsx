@@ -116,9 +116,12 @@ export default function BountyBoard({ onNegotiate }: { onNegotiate: (newPrice: n
           </div>
         </div>
         <div className={`p-3 flex justify-between items-center bg-black/40 transition-colors duration-500 ${isFlashing ? 'bg-green-500/10' : ''}`}>
-          <div className="flex items-center gap-2">
-            <div className={`w-1.5 h-1.5 rounded-full ${reward > 5000 ? 'bg-green-500' : 'bg-stacks animate-pulse'}`} />
-            <span className="text-[9px] text-white/30 uppercase tracking-widest">Priority Execution Level: High</span>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <div className={`w-1.5 h-1.5 rounded-full ${reward > 5000 ? 'bg-green-500' : 'bg-stacks animate-pulse'}`} />
+              <span className="text-[9px] text-white/30 uppercase tracking-widest">Priority Execution Level: High</span>
+            </div>
+            <div className="text-[9px] uppercase tracking-[0.18em] text-blue-400/80">Settlement rail: USDCx for stable high-value payout</div>
           </div>
           <button className="bg-white text-black px-6 py-1.5 text-[10px] font-bold uppercase hover:bg-stacks hover:text-white transition-all">
             Hire Specialist

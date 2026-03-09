@@ -48,6 +48,15 @@ export default function AgentTreasury({ yieldSats, stakedAmount }: AgentTreasury
           </div>
         </div>
       </div>
+
+      <div className="mt-4 grid gap-3 border-t border-white/5 pt-4 text-[10px] text-white/45 md:grid-cols-2">
+        <p>
+          <span className="text-green-400">Harvested sBTC yield</span> is the spending rail for chat-triggered skills.
+        </p>
+        <p>
+          <span className="text-white">stSTXbtc principal stays parked</span> while high-value bounty settlement can shift to USDCx.
+        </p>
+      </div>
     </div>
   );
 }

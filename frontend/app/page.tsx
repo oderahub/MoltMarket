@@ -1,12 +1,16 @@
 "use client";
-import { useRef, useEffect, useState } from 'react';
-import { Terminal as TerminalIcon, ShieldCheck, Bitcoin, Play } from 'lucide-react';
+import { useRef, useEffect, useMemo, useState } from 'react';
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
+import { Terminal as TerminalIcon, ShieldCheck, Bitcoin, Play, Sparkles, Workflow, CircleDollarSign } from 'lucide-react';
 import { openSTXTransfer } from '@stacks/connect';
 import { useTerminal } from '@/hooks/useTerminal';
+import { useChatTerminalBridge } from '@/hooks/useChatTerminalBridge';
 import SkillCard from '@/components/SkillCard';
 import BountyBoard from '@/components/BountyBoard';
 import OperatorConnect from '@/components/OperatorConnect';
 import AgentTreasury from '@/components/AgentTreasury';
+import ChatShell from '@/components/ChatShell';
 import { NETWORK, PLATFORM_ADDRESS, getExplorerTxUrl } from '@/lib/stacks';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -29,6 +33,30 @@ export default function BloombergTerminal() {
   const [demoRunning, setDemoRunning] = useState(false);
   const [yieldSats, setYieldSats] = useState(1420);
   const [stakedAmount] = useState(1250);
+  const chatTransport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: '/api/chat',
+        prepareSendMessagesRequest: ({ body, headers, credentials, api }) => ({
+          api,
+          headers,
+          credentials,
+          body: {
+            ...body,
+            executionContext: {
+              ...(walletAddress ? { walletAddress } : {}),
+            },
+          },
+        }),
+      }),
+    [walletAddress],
+  );
+  const { messages, status, error, sendMessage } = useChat({
+    transport: chatTransport,
+    onError: (chatError) => addLog(`[CHAT_ROUTE] ${chatError.message}`, 'error'),
+  });
+
+  useChatTerminalBridge(messages, addLog);
 
   // Fetch skills from backend on mount
   useEffect(() => {
@@ -228,6 +256,13 @@ export default function BloombergTerminal() {
     setWalletAddress(address);
   };
 
+  const submitPrompt = (prompt: string) => {
+    const nextPrompt = prompt.trim();
+    if (!nextPrompt) return;
+    addLog(`[CHAT] ${nextPrompt}`, 'agent');
+    void sendMessage({ text: nextPrompt });
+  };
+
   const launchDemo = async (type: 'negotiation' | 'full' = 'negotiation') => {
     if (demoRunning) return;
     setDemoRunning(true);
@@ -289,49 +324,96 @@ export default function BloombergTerminal() {
 
       {/* Grid Split */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left 60% - Skills & Bounties */}
-        <div className="w-[60%] border-r border-terminal-border p-8 overflow-y-auto">
-          <h2 className="text-[10px] text-white/40 mb-6 flex items-center gap-2 tracking-[0.2em]">
-            <ShieldCheck size={14} /> INTELLIGENCE SKILLS
-          </h2>
-          <div className="grid grid-cols-2 gap-6">
-            {skills.length > 0 ? (
-              skills.map((skill) => {
-                const hasSbtc = skill.acceptedAssets?.some(a => a.asset === 'sBTC');
-                const hasUsdcx = skill.acceptedAssets?.some(a => a.asset === 'USDCx');
-                const displayPrice = hasSbtc
-                  ? skill.acceptedAssets.find(a => a.asset === 'sBTC')?.display || skill.priceSTX
-                  : skill.priceSTX;
-                return (
-                  <SkillCard
-                    key={skill.id}
-                    title={skill.name.replace('Stacks ', '').replace(' Feed', '')}
-                    desc={skill.description.slice(0, 60) + '...'}
-                    price={displayPrice}
-                    isSbtc={hasSbtc}
-                    isUsdcx={hasUsdcx}
-                    onExecute={() => executeSkill(skill.id, displayPrice)}
-                  />
-                );
-              })
-            ) : (
-              <>
-                <SkillCard title="Loading..." desc="Fetching skills from API" price="..." onExecute={() => {}} />
-                <SkillCard title="Loading..." desc="Fetching skills from API" price="..." onExecute={() => {}} />
-              </>
-            )}
-          </div>
-          <BountyBoard onNegotiate={handleNegotiate} />
-          <AgentTreasury yieldSats={yieldSats} stakedAmount={stakedAmount} />
+        <div className="w-[56%] border-r border-terminal-border overflow-hidden">
+          <ChatShell
+            messages={messages}
+            status={status}
+            error={error}
+            walletAddress={walletAddress}
+            yieldSats={yieldSats}
+            stakedAmount={stakedAmount}
+            onSubmitPrompt={submitPrompt}
+          />
         </div>
 
-        {/* Right 40% - Terminal */}
-        <div className="w-[40%] bg-black flex flex-col font-mono">
-          <div className="p-3 bg-terminal border-b border-terminal-border flex items-center gap-2">
-            <TerminalIcon size={14} className="text-stacks" />
-            <span className="text-[10px] text-white/40 uppercase tracking-[0.2em]">Autonomous Agent Stream</span>
+        <div className="w-[44%] bg-black flex flex-col font-mono">
+          <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6 border-b border-terminal-border">
+            <div className="border border-white/5 bg-terminal/60 p-4">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h2 className="text-[10px] text-white/40 flex items-center gap-2 tracking-[0.2em] uppercase">
+                  <Workflow size={14} className="text-stacks" /> Treasury Storyboard
+                </h2>
+                <span className="border border-stacks/20 bg-stacks/10 px-2 py-1 text-[9px] uppercase tracking-[0.16em] text-stacks">
+                  Wave 1 shell
+                </span>
+              </div>
+
+              <div className="grid gap-3 text-[11px] text-white/60">
+                <div className="border border-white/5 bg-black/40 p-3">
+                  <div className="mb-1 flex items-center gap-2 text-[9px] uppercase tracking-[0.16em] text-white/35">
+                    <Sparkles size={11} className="text-stacks" /> Yield-funded execution
+                  </div>
+                  <p>Chat prompts should unlock wallet audits and alpha through harvested sBTC yield, never by liquidating principal.</p>
+                </div>
+                <div className="border border-white/5 bg-black/40 p-3">
+                  <div className="mb-1 flex items-center gap-2 text-[9px] uppercase tracking-[0.16em] text-white/35">
+                    <CircleDollarSign size={11} className="text-blue-400" /> Stable bounty settlement
+                  </div>
+                  <p>High-value bounty execution should narrate USDCx settlement as the volatility-safe payout leg for the operator.</p>
+                </div>
+                <div className="border border-white/5 bg-black/40 p-3">
+                  <div className="mb-1 flex items-center gap-2 text-[9px] uppercase tracking-[0.16em] text-white/35">
+                    <ShieldCheck size={11} className="text-stacks" /> Proof loop
+                  </div>
+                  <p>Keep the terminal watching for tool progress, verifiable intent payloads, and Hiro explorer links after each on-chain step.</p>
+                </div>
+              </div>
+            </div>
+
+            <AgentTreasury yieldSats={yieldSats} stakedAmount={stakedAmount} />
+
+            <div>
+              <h2 className="text-[10px] text-white/40 mb-4 flex items-center gap-2 tracking-[0.2em] uppercase">
+                <ShieldCheck size={14} /> Intelligence Skills
+              </h2>
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                {skills.length > 0 ? (
+                  skills.map((skill) => {
+                    const hasSbtc = skill.acceptedAssets?.some(a => a.asset === 'sBTC');
+                    const hasUsdcx = skill.acceptedAssets?.some(a => a.asset === 'USDCx');
+                    const displayPrice = hasSbtc
+                      ? skill.acceptedAssets.find(a => a.asset === 'sBTC')?.display || skill.priceSTX
+                      : skill.priceSTX;
+                    return (
+                      <SkillCard
+                        key={skill.id}
+                        title={skill.name.replace('Stacks ', '').replace(' Feed', '')}
+                        desc={skill.description.slice(0, 60) + '...'}
+                        price={displayPrice}
+                        isSbtc={hasSbtc}
+                        isUsdcx={hasUsdcx}
+                        onExecute={() => executeSkill(skill.id, displayPrice)}
+                      />
+                    );
+                  })
+                ) : (
+                  <>
+                    <SkillCard title="Loading..." desc="Fetching skills from API" price="..." onExecute={() => {}} />
+                    <SkillCard title="Loading..." desc="Fetching skills from API" price="..." onExecute={() => {}} />
+                  </>
+                )}
+              </div>
+            </div>
+
+            <BountyBoard onNegotiate={handleNegotiate} />
           </div>
-          <div className="flex-1 p-6 overflow-y-auto space-y-3">
+
+          <div className="min-h-[320px] h-[44%] flex flex-col">
+            <div className="p-3 bg-terminal border-b border-terminal-border flex items-center gap-2">
+              <TerminalIcon size={14} className="text-stacks" />
+              <span className="text-[10px] text-white/40 uppercase tracking-[0.2em]">Autonomous Agent Stream</span>
+            </div>
+            <div className="flex-1 p-6 overflow-y-auto space-y-3">
             {logs.map((log, i) => {
               // Check if this is a STEP indicator
               const isStep = log.message.includes('[STEP');
@@ -382,20 +464,21 @@ export default function BloombergTerminal() {
             })}
             <div ref={terminalEndRef} />
           </div>
+          </div>
         </div>
       </div>
 
       {/* Ticker Footer */}
       <footer className="h-8 bg-stacks text-black flex items-center overflow-hidden text-[10px] font-bold">
         <div className="whitespace-nowrap animate-marquee flex gap-12">
-          <span>LATEST SETTLEMENT: 0x71a2... CONFIRMED</span>
+          <span>CHAT-FIRST SHELL LIVE: PROMPT → TOOL CALL → PROOF</span>
           <span>STACKING_DAO: CYCLE 114 REWARDS DISTRIBUTED</span>
           <span>YIELD POOL: 2.4M stSTXbtc STAKED</span>
-          <span>NEGOTIATION COMPLETED: BOUNTY #104 - 8000 STX</span>
-          <span>SBTC/STX PAIR VOLUME UP 14%</span>
+          <span>HARVESTED sBTC FUNDS EXECUTION — PRINCIPAL PRESERVED</span>
+          <span>HIGH-VALUE BOUNTIES SETTLE ON THE USDCx RAIL</span>
           <span>HIRO API LATENCY: 142MS</span>
           <span>x402-STACKS PROTOCOL ACTIVE</span>
-          <span>YIELD ENGINE: AGENTS SELF-FUNDING VIA LIQUID STAKING</span>
+          <span>VERIFIABLE INTENT + EXPLORER LINKS REQUIRED FOR HERO FLOW</span>
         </div>
       </footer>
     </div>
