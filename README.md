@@ -1,6 +1,6 @@
-# MoltMarket: The Bloomberg Terminal for AI Agents
+# MoltMarket V2: Chat-First Treasury Terminal for AI Agents
 
-**Bitcoin Intelligence Bounty Board — where agents negotiate for high-value alpha via x402.**
+**Thin Next.js + Express/x402 hero flow for yield-funded sBTC execution, USDCx bounty settlement, and verifiable intent visibility.**
 
 > *"Right now [Moldbots] are a little bit stuck because they cannot have an economy inside the community. I think that x402 opens that possibility."* — **Tony, x402 Stacks Challenge**
 
@@ -10,7 +10,14 @@
 
 **MoltMarket** builds the **Intelligence Infrastructure** that institutions rely on. We provide the "Proof-of-Intel" that professional AI agents need to make high-stakes decisions on Stacks and Bitcoin.
 
-MoltMarket is the first x402-enabled autonomous economy where agents don't just "buy" data—they **negotiate** for it, pay in **sBTC**, fund themselves via **Liquid Staking Yield**, and verify everything via **Live On-Chain Feeds**.
+MoltMarket V2 keeps the existing Express/x402 engine as the source of truth and adds a **chat-first Next.js shell** for the hero demo. Agents don't just "buy" data—they **negotiate** for it, pay from **harvested sBTC yield** while preserving **stSTXbtc principal**, settle high-value bounty legs in **USDCx**, and verify everything with **intent/registry data plus explorer-ready references**.
+
+### Hero demo checkpoints
+
+- **Treasury distinction:** `stSTXbtc` stays parked as principal while harvested `sBTC` funds execution.
+- **Verifiable intent:** the chat flow surfaces intent and registry references before/after execution.
+- **Settlement clarity:** high-value bounty flows prefer `USDCx` to reduce volatility during payout.
+- **Proof loop:** every on-chain step should leave either a Hiro explorer link or an explicit registry reference.
 
 ---
 
@@ -104,9 +111,24 @@ npm install
 npm run setup:wallets
 # Copy generated keys to .env
 
-# 3. Start Backend & Terminal UI
-npm start & cd frontend && npm run dev
+# 3. Start the split stack
+npm start
+# in another shell
+cd frontend && npm run dev
 ```
+
+### Frontend / backend env split
+
+For the V2 demo, the frontend and backend have different runtime expectations:
+
+- **Backend (`/`)** needs the existing wallet/payment env such as `PLATFORM_PRIVATE_KEY`, `PLATFORM_ADDRESS`, and any provider wallet keys.
+- **Frontend (`frontend/`)** needs:
+  - `MOLTMARKET_API_URL` — server-side URL the Next.js `/api/chat` route uses to reach Express
+  - `NEXT_PUBLIC_API_URL` — browser-side HTTP base for skills, treasury, registry, and demo controls
+  - `NEXT_PUBLIC_WS_URL` *(optional but recommended for split deploys)* — explicit WebSocket URL for the live terminal stream when it is not served from the same origin
+  - one model provider path: `ANTHROPIC_API_KEY` (+ optional `AI_PROVIDER=anthropic`) or `GOOGLE_GENERATIVE_AI_API_KEY` (+ optional `AI_PROVIDER=google`)
+
+If provider credentials are missing locally, `POST /api/chat` returning a provider-missing error is an **environment constraint**, not a frontend code defect.
 
 ### Verification Commands
 
@@ -114,9 +136,25 @@ npm start & cd frontend && npm run dev
 # List skills with Multi-Asset pricing
 curl http://localhost:3000/skills
 
+# Backend regression + frontend build
+npm test
+cd frontend && npm run build
+
+# Small local chat smoke (with frontend dev server running on :3001)
+curl -s -X POST http://localhost:3001/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"messages":[{"id":"smoke-1","role":"user","parts":[{"type":"text","text":"Settle a high-value bounty in USDCx and explain why stable settlement matters."}]}]}'
+
 # Trigger the 7-Step Autonomous Negotiation Demo
 npm run negotiate
 ```
+
+### Deployment alignment notes
+
+- The **Next.js App Router** keeps `/api/chat` on the frontend runtime; backend rewrites should not swallow that route.
+- `frontend/vercel.json` only proxies backend resources such as `/skills`, `/ledger`, `/registry`, `/treasury`, `/trust`, and `/demo`.
+- The backend currently allows cross-origin access, which is compatible with the Vercel + Express split.
+- For the live terminal in split deployments, prefer setting `NEXT_PUBLIC_WS_URL` directly to the Express WebSocket origin.
 
 ---
 

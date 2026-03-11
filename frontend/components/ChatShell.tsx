@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import type { UIMessage } from 'ai';
-import { Bot, LoaderCircle, Send, ShieldCheck, Sparkles, User, Wallet } from 'lucide-react';
+import { Bot, Clock3, LoaderCircle, Send, ShieldCheck, Sparkles, User, Wallet } from 'lucide-react';
 
 type ChatStatus = 'submitted' | 'streaming' | 'ready' | 'error';
 type ChatPart = UIMessage['parts'][number];
@@ -26,6 +26,17 @@ type ProgressItem = {
   detail?: string;
   explorerUrl?: string;
   txId?: string;
+};
+
+type TransactionItem = {
+  label: string;
+  status?: string;
+  explorerUrl?: string;
+  registryUrl?: string;
+  txId?: string;
+  asset?: string;
+  fundingSource?: string;
+  principalPreserved?: boolean;
 };
 
 const QUICK_PROMPTS = [
@@ -60,6 +71,10 @@ function getOutputSummary(output: unknown): string | null {
 
 function getOutputIntent(output: unknown): Record<string, unknown> | null {
   return isRecord(output) && isRecord(output.intent) ? output.intent : null;
+}
+
+function getVerifiableIntent(output: unknown): Record<string, unknown> | null {
+  return isRecord(output) && isRecord(output.verifiableIntent) ? output.verifiableIntent : null;
 }
 
 function getStringField(output: unknown, field: string): string | null {
@@ -147,6 +162,69 @@ function getExplorerUrl(output: unknown): string | null {
   return typeof url === 'string' ? url : null;
 }
 
+function getRegistryLinks(output: unknown): Array<{ label: string; url: string }> {
+  if (!isRecord(output) || !isRecord(output.registry)) return [];
+  const registry = output.registry as Record<string, unknown>;
+
+  const entries: Array<{ label: string; field: string }> = [
+    { label: 'Intent record', field: 'intent' },
+    { label: 'Attestation helper', field: 'attestation' },
+    { label: 'Settlement log', field: 'settlements' },
+  ];
+
+  return entries
+    .map(({ label, field }) => {
+      const url = registry[field];
+      return typeof url === 'string' && url.length > 0 ? { label, url } : null;
+    })
+    .filter((entry): entry is { label: string; url: string } => Boolean(entry));
+}
+
+function getTransactions(output: unknown): TransactionItem[] {
+  if (!isRecord(output) || !Array.isArray(output.transactions)) return [];
+
+  return output.transactions
+    .filter(isRecord)
+    .map((item) => ({
+      label:
+        typeof item.label === 'string'
+          ? item.label
+          : typeof item.kind === 'string'
+            ? item.kind
+            : 'Reference',
+      status: typeof item.status === 'string' ? item.status : undefined,
+      explorerUrl: typeof item.explorerUrl === 'string' ? item.explorerUrl : undefined,
+      registryUrl: typeof item.registryUrl === 'string' ? item.registryUrl : undefined,
+      txId: typeof item.txid === 'string' ? item.txid : undefined,
+      asset: typeof item.asset === 'string' ? item.asset : undefined,
+      fundingSource: typeof item.fundingSource === 'string' ? item.fundingSource : undefined,
+      principalPreserved: typeof item.principalPreserved === 'boolean' ? item.principalPreserved : undefined,
+    }));
+}
+
+function getNarration(output: unknown): Record<string, unknown> | null {
+  return isRecord(output) && isRecord(output.narration) ? output.narration : null;
+}
+
+function formatTimestamp(value: unknown): string | null {
+  if (!value) return null;
+
+  if (value instanceof Date) return value.toLocaleTimeString();
+
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) return parsed.toLocaleTimeString();
+  }
+
+  return null;
+}
+
+function formatStatusBadge(status: string) {
+  if (status === 'error') return 'border-red-500/20 bg-red-500/10 text-red-300';
+  if (status === 'payment_required') return 'border-blue-500/20 bg-blue-500/10 text-blue-200';
+  return 'border-green-500/20 bg-green-500/10 text-green-400';
+}
+
 function toJsonPreview(value: unknown): string | null {
   try {
     const text = JSON.stringify(value, null, 2);
@@ -161,8 +239,12 @@ function ToolCard({ part }: { part: ToolLikePart }) {
   const summary = getOutputSummary(output);
   const status = getOutputStatus(output);
   const intent = getOutputIntent(output);
+  const verifiableIntent = getVerifiableIntent(output);
   const progressItems = getProgressItems(output);
   const explorerUrl = getExplorerUrl(output);
+  const registryLinks = getRegistryLinks(output);
+  const transactions = getTransactions(output);
+  const narration = getNarration(output);
   const toolName = getStringField(output, 'toolName');
   const skillId = getStringField(output, 'skillId');
   const paymentRequest = getObjectField(output, 'paymentRequest');
@@ -189,7 +271,7 @@ function ToolCard({ part }: { part: ToolLikePart }) {
       {part.state === 'output-available' ? (
         <div className="space-y-3">
           {status ? (
-            <div className="inline-flex border border-green-500/20 bg-green-500/10 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-green-400">
+            <div className={`inline-flex border px-2 py-1 text-[9px] font-bold uppercase tracking-[0.18em] ${formatStatusBadge(status)}`}>
               {status}
             </div>
           ) : null}
@@ -202,6 +284,27 @@ function ToolCard({ part }: { part: ToolLikePart }) {
           ) : null}
 
           {summary ? <p className="text-[11px] leading-relaxed text-white/80">{summary}</p> : null}
+
+          {narration ? (
+            <div className="grid gap-2 border border-white/10 bg-white/[0.02] p-3 text-[10px] text-white/70 md:grid-cols-2">
+              <div>
+                <div className="mb-1 uppercase tracking-[0.14em] text-white/40">Treasury rail</div>
+                <p>
+                  {narration.fundingSource === 'yield'
+                    ? 'Harvested sBTC funded this execution while the stSTXbtc principal stayed parked.'
+                    : 'Principal-funded payment path is active for this step.'}
+                </p>
+              </div>
+              <div>
+                <div className="mb-1 uppercase tracking-[0.14em] text-white/40">Settlement posture</div>
+                <p>
+                  {typeof narration.settlementAsset === 'string' ? narration.settlementAsset : 'Unknown asset'}
+                  {narration.principalPreserved === true ? ' · principal preserved' : ''}
+                  {typeof narration.proofStatus === 'string' ? ` · proof ${narration.proofStatus}` : ''}
+                </p>
+              </div>
+            </div>
+          ) : null}
 
           {status === 'payment_required' && paymentContext ? (
             <div className="space-y-2 border border-blue-500/20 bg-blue-500/10 p-3 text-[10px] text-blue-100">
@@ -257,10 +360,29 @@ function ToolCard({ part }: { part: ToolLikePart }) {
             </div>
           ) : null}
 
-          {intent ? (
+          {verifiableIntent || intent ? (
             <div className="border border-white/10 bg-white/[0.02] p-3">
-              <div className="mb-2 uppercase tracking-[0.14em] text-white/40">Verifiable intent preview</div>
-              <pre className="overflow-x-auto whitespace-pre-wrap text-white/65">{toJsonPreview(intent)}</pre>
+              <div className="mb-2 uppercase tracking-[0.14em] text-white/40">
+                {verifiableIntent ? 'Verifiable intent preview' : 'Thin-layer intent preview'}
+              </div>
+              <pre className="overflow-x-auto whitespace-pre-wrap text-white/65">{toJsonPreview(verifiableIntent ?? intent)}</pre>
+            </div>
+          ) : null}
+
+          {registryLinks.length > 0 ? (
+            <div className="space-y-2 border border-white/10 bg-white/[0.02] p-3 text-[10px] text-white/70">
+              <div className="uppercase tracking-[0.14em] text-white/40">Registry references</div>
+              {registryLinks.map((link) => (
+                <a
+                  key={`${link.label}-${link.url}`}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-stacks underline"
+                >
+                  {link.label}
+                </a>
+              ))}
             </div>
           ) : null}
 
@@ -282,6 +404,40 @@ function ToolCard({ part }: { part: ToolLikePart }) {
             <div className="border border-white/10 bg-white/[0.02] p-3">
               <div className="mb-2 uppercase tracking-[0.14em] text-white/40">Backend result</div>
               <pre className="overflow-x-auto whitespace-pre-wrap text-white/65">{toJsonPreview(result)}</pre>
+            </div>
+          ) : null}
+
+          {transactions.length > 0 ? (
+            <div className="space-y-2 border border-white/10 bg-white/[0.02] p-3 text-[10px] text-white/70">
+              <div className="uppercase tracking-[0.14em] text-white/40">Explorer-ready references</div>
+              {transactions.map((tx, index) => (
+                <div key={`${tx.label}-${index}`} className="space-y-1 border border-white/10 bg-black/20 px-2 py-2">
+                  <div className="flex flex-wrap items-center gap-2 uppercase tracking-[0.14em] text-white/45">
+                    <span>{tx.label}</span>
+                    {tx.status ? <span className="text-stacks">{tx.status}</span> : null}
+                    {tx.asset ? <span>{tx.asset}</span> : null}
+                  </div>
+                  {tx.fundingSource ? (
+                    <p>
+                      {tx.fundingSource === 'yield' ? 'Yield-funded' : 'Principal-funded'}
+                      {tx.principalPreserved ? ' · principal preserved' : ''}
+                    </p>
+                  ) : null}
+                  {tx.explorerUrl ? (
+                    <a href={tx.explorerUrl} target="_blank" rel="noopener noreferrer" className="inline-flex text-stacks underline">
+                      Open explorer proof
+                    </a>
+                  ) : null}
+                  {!tx.explorerUrl && tx.registryUrl ? (
+                    <a href={tx.registryUrl} target="_blank" rel="noopener noreferrer" className="inline-flex text-stacks underline">
+                      Open registry reference
+                    </a>
+                  ) : null}
+                  {!tx.explorerUrl && !tx.registryUrl && tx.txId ? (
+                    <div className="text-white/50">txid: {tx.txId}</div>
+                  ) : null}
+                </div>
+              ))}
             </div>
           ) : null}
 
@@ -319,6 +475,8 @@ function MessageBubble({ message }: { message: UIMessage }) {
   const isUser = message.role === 'user';
   const textParts = message.parts.filter((part): part is Extract<ChatPart, { type: 'text' }> => part.type === 'text');
   const toolParts = message.parts.filter(isToolLikePart);
+  const messageMeta = message as UIMessage & { metadata?: Record<string, unknown>; createdAt?: unknown };
+  const timestamp = formatTimestamp(messageMeta.metadata?.createdAt ?? messageMeta.createdAt);
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -326,6 +484,11 @@ function MessageBubble({ message }: { message: UIMessage }) {
         <div className="flex items-center gap-2 text-[9px] uppercase tracking-[0.2em] text-white/35">
           {isUser ? <User size={11} /> : <Bot size={11} className="text-stacks" />}
           <span>{isUser ? 'Operator Prompt' : 'MoltMarket Orchestrator'}</span>
+          {timestamp ? (
+            <span className="inline-flex items-center gap-1 text-white/25">
+              <Clock3 size={10} /> {timestamp}
+            </span>
+          ) : null}
         </div>
 
         {textParts.map((part, index) => (
@@ -390,7 +553,7 @@ export default function ChatShell({
 
           <div className="border border-white/10 bg-black/60 px-3 py-2 text-right text-[10px] uppercase tracking-[0.16em] text-white/45">
             <div className="text-stacks">POST /api/chat</div>
-            <div>Thin App Router stream</div>
+            <div>{isStreaming ? 'Streaming hero flow' : 'Thin App Router stream'}</div>
           </div>
         </div>
 
@@ -418,6 +581,11 @@ export default function ChatShell({
             <p>{walletAddress ? `Operator linked: ${walletAddress}` : 'Observer mode until wallet handshake is approved.'}</p>
           </div>
         </div>
+
+        <div className="mt-4 inline-flex items-center gap-2 border border-white/10 bg-black/50 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/45">
+          <Clock3 size={11} className="text-stacks" />
+          {isStreaming ? 'Live: waiting on tool + backend output' : 'Idle: prompt ready'}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">
@@ -444,8 +612,8 @@ export default function ChatShell({
               <MessageBubble key={message.id} message={message} />
             ))}
             {isStreaming ? (
-              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-white/35">
-                <LoaderCircle size={13} className="animate-spin text-stacks" /> Streaming route output…
+              <div className="flex items-center gap-2 border border-stacks/20 bg-stacks/10 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/55">
+                <LoaderCircle size={13} className="animate-spin text-stacks" /> Streaming route output — watch for intent, payment requirements, and explorer proof.
               </div>
             ) : null}
             <div ref={transcriptEndRef} />

@@ -31,7 +31,35 @@ function getStatus(output: unknown): string | null {
 }
 
 function getIntent(output: unknown): Record<string, unknown> | null {
-  return isRecord(output) && isRecord(output.intent) ? output.intent : null;
+  if (!isRecord(output)) return null;
+  if (isRecord(output.verifiableIntent)) return output.verifiableIntent;
+  return isRecord(output.intent) ? output.intent : null;
+}
+
+function getNarration(output: unknown): Record<string, unknown> | null {
+  return isRecord(output) && isRecord(output.narration) ? output.narration : null;
+}
+
+function getRegistryUrls(output: unknown): string[] {
+  if (!isRecord(output) || !isRecord(output.registry)) return [];
+
+  const urls = [output.registry.intent, output.registry.attestation, output.registry.settlements];
+  return urls.filter((value): value is string => typeof value === 'string' && value.startsWith('http'));
+}
+
+function getTransactionLines(output: unknown): string[] {
+  if (!isRecord(output) || !Array.isArray(output.transactions)) return [];
+
+  return output.transactions
+    .filter(isRecord)
+    .map((tx) => {
+      const label = typeof tx.label === 'string' ? tx.label : 'reference';
+      const asset = typeof tx.asset === 'string' ? tx.asset : null;
+      const fundingSource = typeof tx.fundingSource === 'string' ? tx.fundingSource : null;
+      const principalPreserved = tx.principalPreserved === true ? 'principal preserved' : null;
+      return [label, asset, fundingSource, principalPreserved].filter(Boolean).join(' · ');
+    })
+    .filter(Boolean);
 }
 
 function getOutputError(output: unknown): string | null {
@@ -146,9 +174,28 @@ export function useChatTerminalBridge(
         const summary = getSummary(part.output);
         if (summary) addLog(summary, 'info');
 
+        const narration = getNarration(part.output);
+        if (narration) {
+          if (narration.fundingSource === 'yield') {
+            addLog('[TREASURY] Harvested sBTC funded execution; stSTXbtc principal stayed parked.', 'success');
+          }
+
+          if (typeof narration.settlementAsset === 'string') {
+            addLog(`[SETTLEMENT] ${narration.settlementAsset} rail selected`, narration.settlementAsset === 'USDCx' ? 'success' : 'info');
+          }
+
+          if (typeof narration.proofStatus === 'string') {
+            addLog(`[PROOF] ${narration.proofStatus}`, 'system');
+          }
+        }
+
         const progressLines = getProgressLines(part.output);
         for (const line of progressLines.slice(0, 4)) {
           addLog(`[${label}] ${line}`, 'system');
+        }
+
+        for (const line of getTransactionLines(part.output).slice(0, 4)) {
+          addLog(`[REFERENCE] ${line}`, 'info');
         }
 
         if (status === 'payment_required') {
@@ -161,6 +208,10 @@ export function useChatTerminalBridge(
         const intent = getIntent(part.output);
         if (intent) {
           addLog(`[INTENT] ${JSON.stringify(intent).slice(0, 240)}`, 'system');
+        }
+
+        for (const url of getRegistryUrls(part.output)) {
+          addLog(`Registry: ${url}`, 'info');
         }
 
         const outputError = getOutputError(part.output);

@@ -107,10 +107,12 @@ export default function BloombergTerminal() {
 
       // Use appropriate header based on payment type
       if (isYieldPayment) {
-        headers['X-Yield-Payment'] = txId;
+        headers['x-yield-payment'] = txId;
       } else {
-        headers['X-402-Payment'] = txId;
+        headers['x-payment-txid'] = txId;
       }
+
+      addLog(`[PAYMENT] Using ${isYieldPayment ? 'x-yield-payment' : 'x-payment-txid'} proof header`, 'info');
 
       const res = await fetch(`${API_BASE}/skills/${skillId}/execute`, {
         method: 'POST',
@@ -344,7 +346,7 @@ export default function BloombergTerminal() {
                   <Workflow size={14} className="text-stacks" /> Treasury Storyboard
                 </h2>
                 <span className="border border-stacks/20 bg-stacks/10 px-2 py-1 text-[9px] uppercase tracking-[0.16em] text-stacks">
-                  Wave 1 shell
+                  Wave 3 hero flow
                 </span>
               </div>
 
