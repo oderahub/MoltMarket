@@ -67,7 +67,9 @@ import log from "../utils/logger.js";
 import {
   PAYMENT_RESPONSE_HEADER,
   buildPaymentResponse,
+  getPaymentFailureReason,
   getExplorerTxUrl,
+  isExecutionUnlockedPayment,
 } from "../utils/x402.js";
 
 const router = Router();
@@ -93,6 +95,17 @@ function buildRegistryLinks(intentId) {
     intent: `/registry/intents/${intentId}`,
     attestation: `/registry/intents/${intentId}/attestation`,
     settlements: `/registry/settlements?intentId=${intentId}`,
+    mode: "api-attested",
+    attestationMode: "express-registry-api",
+    contract: {
+      identifier: config.intentRegistry.contractId,
+      name: config.intentRegistry.contractName,
+      path: config.intentRegistry.contractPath,
+      network: config.intentRegistry.network,
+      deploymentStatus: config.intentRegistry.deploymentStatus,
+      deploymentTxid: config.intentRegistry.deploymentTxid,
+      deploymentExplorerUrl: config.intentRegistry.deploymentExplorerUrl,
+    },
   };
 }
 
@@ -130,7 +143,7 @@ function buildTransactionReferences({ intentId, payment, distributions = [] }) {
 
   references.push({
     kind: "registry",
-    label: "Intent registry attestation",
+    label: "Intent attestation record",
     txid: "",
     asset: "registry",
     amount: "0",
@@ -138,6 +151,18 @@ function buildTransactionReferences({ intentId, payment, distributions = [] }) {
     explorerReady: false,
     status: "available",
     registryUrl: `/registry/intents/${intentId}/attestation`,
+  });
+
+  references.push({
+    kind: "registry-contract",
+    label: "Deployed registry contract",
+    txid: config.intentRegistry.deploymentTxid,
+    asset: "registry",
+    amount: "0",
+    explorerUrl: config.intentRegistry.deploymentExplorerUrl || null,
+    explorerReady: Boolean(config.intentRegistry.deploymentExplorerUrl),
+    status: config.intentRegistry.deploymentStatus,
+    registryUrl: `/registry/intents/${intentId}`,
   });
 
   return references;
@@ -174,7 +199,7 @@ router.get("/", (req, res) => {
         "GET /ledger/summary": "Payment summary statistics",
         "GET /registry/intents": "List verifiable execution intents",
         "GET /registry/intents/:id": "Inspect a specific verifiable intent",
-        "GET /registry/intents/:id/attestation": "Read the testnet-safe attestation envelope for an intent",
+        "GET /registry/intents/:id/attestation": "Read the Express registry API attestation for an intent, including the deployed testnet registry contract reference",
         "GET /registry/settlements": "List recorded ledger settlements",
       },
       paid: {
@@ -329,6 +354,67 @@ router.post(
     const intent = req.intentRecord;
     const payment = req.x402;
     const registryLinks = buildRegistryLinks(intent.id);
+
+    if (!isExecutionUnlockedPayment(payment)) {
+      const errorReason = payment
+        ? getPaymentFailureReason(payment)
+        : "Missing verified payment proof for the selected settlement.";
+      const paymentRequiredIntent = payment
+        ? recordIntentSettlement(intent.id, payment)
+        : markIntentPaymentRequired(intent.id, {
+            paymentRequestPath: req.originalUrl,
+          });
+
+      log.warn("API", `Rejecting paid execution for "${skill.id}": ${errorReason}`);
+      res.set(
+        PAYMENT_RESPONSE_HEADER,
+        buildPaymentResponse({
+          success: false,
+          txid: payment?.txid || "",
+          asset: payment?.asset || "",
+          intentId: intent.id,
+          settlementDigest: paymentRequiredIntent?.verification?.settlementDigest || "",
+          errorReason,
+        })
+      );
+
+      return res.status(402).json({
+        error: "Payment verification failed",
+        details: errorReason,
+        payment: payment
+          ? {
+              ...payment,
+              verified: false,
+              explorerUrl: payment.explorerUrl || getExplorerTxUrl(payment.txid),
+            }
+          : null,
+        settlement: {
+          asset: payment?.asset || null,
+          method: payment?.method || null,
+          fundingSource:
+            paymentRequiredIntent?.settlement?.payment?.fundingSource || payment?.fundingSource || "principal",
+          principalPreserved: Boolean(
+            paymentRequiredIntent?.settlement?.payment?.principalPreserved ?? payment?.principalPreserved
+          ),
+          proofStatus:
+            paymentRequiredIntent?.settlement?.payment?.proofStatus || payment?.proofStatus || null,
+          selectedQuote: paymentRequiredIntent?.settlement?.payment?.quote || payment?.quote || null,
+        },
+        intent: {
+          id: intent.id,
+          status: paymentRequiredIntent?.status || intent.status,
+          verification: paymentRequiredIntent?.verification || intent.verification,
+          registryPath: registryLinks.intent,
+          attestationPath: registryLinks.attestation,
+        },
+        verifiableIntent: paymentRequiredIntent?.verifiableIntent || intent.verifiableIntent || null,
+        registry: registryLinks,
+        transactions: buildTransactionReferences({
+          intentId: intent.id,
+          payment: paymentRequiredIntent?.settlement?.payment || payment,
+        }),
+      });
+    }
 
     log.success("API", `Skill "${skill.id}" purchased! txid: ${payment.txid}`);
     const settledIntent = recordIntentSettlement(intent.id, payment);

@@ -31,7 +31,7 @@
         owner: tx-sender,
         intent-id: intent-id,
         skill-id: skill-id,
-        created-at: block-height,
+        created-at: stacks-block-height,
         attestation-hash: none
       }
     )

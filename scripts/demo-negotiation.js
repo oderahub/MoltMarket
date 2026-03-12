@@ -20,7 +20,21 @@ import { STACKS_TESTNET, STACKS_MAINNET } from "@stacks/network";
 import dotenv from "dotenv";
 dotenv.config();
 
-const BASE_URL = process.env.SERVER_URL || "http://localhost:3000";
+function normalizeBaseUrl(value) {
+  const raw = value || "http://127.0.0.1:3000";
+
+  try {
+    const url = new URL(raw);
+    if (url.hostname === "localhost") {
+      url.hostname = "127.0.0.1";
+    }
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return raw;
+  }
+}
+
+const BASE_URL = normalizeBaseUrl(process.env.SERVER_URL);
 const AGENT_KEY = process.env.DEMO_AGENT_PRIVATE_KEY;
 const NETWORK_NAME = process.env.STACKS_NETWORK || "testnet";
 const NETWORK = NETWORK_NAME === "mainnet" ? STACKS_MAINNET : STACKS_TESTNET;

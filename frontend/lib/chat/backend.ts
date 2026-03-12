@@ -71,8 +71,30 @@ function toAbsoluteUrl(value: string | null | undefined) {
   }
 }
 
+function normalizeRegistryContract(contract: Record<string, unknown> | null | undefined) {
+  if (!contract) return null;
+
+  return {
+    identifier: typeof contract.identifier === "string" ? contract.identifier : null,
+    name: typeof contract.name === "string" ? contract.name : null,
+    path: typeof contract.path === "string" ? contract.path : null,
+    network: typeof contract.network === "string" ? contract.network : null,
+    deploymentStatus:
+      typeof contract.deploymentStatus === "string" ? contract.deploymentStatus : null,
+    deploymentTxid:
+      typeof contract.deploymentTxid === "string" ? contract.deploymentTxid : null,
+    explorerUrl: toAbsoluteUrl(
+      typeof contract.deploymentExplorerUrl === "string"
+        ? contract.deploymentExplorerUrl
+        : null
+    ),
+  };
+}
+
 function normalizeRegistry(registry: Record<string, unknown> | null | undefined) {
   if (!registry) return null;
+
+  const contract = isRecord(registry.contract) ? registry.contract : null;
 
   return {
     intent: toAbsoluteUrl(String(registry.intent || registry.intentPath || "")) || null,
@@ -80,6 +102,10 @@ function normalizeRegistry(registry: Record<string, unknown> | null | undefined)
       toAbsoluteUrl(String(registry.attestation || registry.attestationPath || "")) || null,
     settlements:
       toAbsoluteUrl(String(registry.settlements || registry.settlementsPath || "")) || null,
+    mode: typeof registry.mode === "string" ? registry.mode : null,
+    attestationMode:
+      typeof registry.attestationMode === "string" ? registry.attestationMode : null,
+    contract: normalizeRegistryContract(contract),
   };
 }
 

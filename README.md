@@ -109,7 +109,8 @@ npm install
 
 # 2. Setup Wallets & Env
 npm run setup:wallets
-# Copy generated keys to .env
+# Copy generated keys to .env using .env.example as the template
+# Copy frontend/.env.example to frontend/.env.local for local chat/demo work
 
 # 3. Start the split stack
 npm start
@@ -126,9 +127,17 @@ For the V2 demo, the frontend and backend have different runtime expectations:
   - `MOLTMARKET_API_URL` — server-side URL the Next.js `/api/chat` route uses to reach Express
   - `NEXT_PUBLIC_API_URL` — browser-side HTTP base for skills, treasury, registry, and demo controls
   - `NEXT_PUBLIC_WS_URL` *(optional but recommended for split deploys)* — explicit WebSocket URL for the live terminal stream when it is not served from the same origin
-  - one model provider path: `ANTHROPIC_API_KEY` (+ optional `AI_PROVIDER=anthropic`) or `GOOGLE_GENERATIVE_AI_API_KEY` (+ optional `AI_PROVIDER=google`)
+  - default chat path: `OPENAI_API_KEY` with optional `OPENAI_CHAT_MODEL` (defaults to `gpt-4o-mini`)
+  - optional explicit provider overrides: `AI_PROVIDER` / `CHAT_PROVIDER` can select `openai`, `anthropic`, or `google`
+  - non-default provider credentials when explicitly selected: `ANTHROPIC_API_KEY` (+ optional `ANTHROPIC_CHAT_MODEL`) or `GOOGLE_GENERATIVE_AI_API_KEY` (+ optional `GOOGLE_CHAT_MODEL`)
 
 If provider credentials are missing locally, `POST /api/chat` returning a provider-missing error is an **environment constraint**, not a frontend code defect.
+
+Committed env guidance:
+
+- Use [`.env.example`](/Users/mac/intent/workspaces/audit-type/moltmarket/.env.example) for backend setup.
+- Use [`frontend/.env.example`](/Users/mac/intent/workspaces/audit-type/moltmarket/frontend/.env.example) for frontend setup.
+- Do not commit `frontend/.env.production`; production frontend env should be managed by the hosting platform.
 
 ### Verification Commands
 

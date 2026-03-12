@@ -100,6 +100,48 @@ export function resolveSettlementQuote({
   );
 }
 
+export function resolvePaymentProofStatus(payment = {}) {
+  if (payment.proofStatus) return payment.proofStatus;
+  if (payment.method === "yield-payment") return "yield-helper";
+  return payment.verified === false ? "pending-onchain" : "verified-onchain";
+}
+
+export function isExecutionUnlockedPayment(payment = {}) {
+  if (!payment || typeof payment !== "object") return false;
+
+  const proofStatus = resolvePaymentProofStatus(payment);
+  if (proofStatus === "yield-helper") {
+    return payment.verified !== false;
+  }
+
+  return payment.verified === true && proofStatus === "verified-onchain";
+}
+
+export function getPaymentFailureReason(payment = {}) {
+  const proofStatus = resolvePaymentProofStatus(payment);
+
+  switch (proofStatus) {
+    case "tx-found-asset-unconfirmed":
+      return "Payment proof does not match the selected settlement asset or contract.";
+    case "pending-onchain":
+      return "Payment proof is still pending or was not found on-chain.";
+    case "verification-unavailable":
+      return "Payment proof could not be verified on-chain.";
+    case "tx-status-not-success":
+      return "Payment transaction was found on-chain but did not settle successfully.";
+    case "yield-helper":
+      return payment.verified === false
+        ? "Yield-powered payment proof is not valid for execution."
+        : "";
+    case "verified-onchain":
+      return payment.verified === true
+        ? ""
+        : "Payment proof is not valid for the selected settlement.";
+    default:
+      return "Payment proof is not valid for the selected settlement.";
+  }
+}
+
 /**
  * Builds the JSON body for an HTTP 402 Payment Required response.
  *

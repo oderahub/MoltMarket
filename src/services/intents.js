@@ -12,14 +12,25 @@ import { existsSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import config from "../config.js";
 import log from "../utils/logger.js";
-import { normalizeAcceptedAssets } from "../utils/x402.js";
+import {
+  getPaymentFailureReason,
+  isExecutionUnlockedPayment,
+  normalizeAcceptedAssets,
+  resolvePaymentProofStatus,
+} from "../utils/x402.js";
 
 const INTENT_FILE =
   process.env.MOLTMARKET_INTENT_FILE || join(process.cwd(), "intents.json");
+const REGISTRY_MODE = "api-attested";
+const REGISTRY_ATTESTATION_MODE = "express-registry-api";
 const INTENT_REGISTRY_CONTRACT = {
-  name: "verifiable-intent-registry",
-  path: "contracts/verifiable-intent-registry.clar",
-  deploymentStatus: "not-configured",
+  identifier: config.intentRegistry.contractId,
+  name: config.intentRegistry.contractName,
+  path: config.intentRegistry.contractPath,
+  network: config.intentRegistry.network,
+  deploymentStatus: config.intentRegistry.deploymentStatus,
+  deploymentTxid: config.intentRegistry.deploymentTxid,
+  deploymentExplorerUrl: config.intentRegistry.deploymentExplorerUrl,
 };
 
 function loadIntents() {
@@ -128,16 +139,16 @@ function buildAttestation(intent) {
 
   return {
     version: 1,
-    type: "offchain-intent-attestation",
-    mode: "testnet-safe-helper",
-    helper: "json-registry",
+    type: "backend-intent-attestation",
+    mode: REGISTRY_MODE,
+    helper: REGISTRY_ATTESTATION_MODE,
     status: intent.settlement?.payment ? "ready" : "pending-payment",
     digest: digest(payload),
     registry: buildRegistryPaths(intent.id),
     notes: [
-      "Repository does not include Clarinet or a contract deployment workflow.",
-      "This attestation helper preserves a canonical JSON envelope for testnet-safe registry integration.",
-      `Reference contract source is available at ${INTENT_REGISTRY_CONTRACT.path}.`,
+      "Intent and attestation records are served by the Express registry API for the live hero flow.",
+      `Deployed Stacks ${INTENT_REGISTRY_CONTRACT.network} contract reference: ${INTENT_REGISTRY_CONTRACT.identifier}.`,
+      `Verify the contract publication at ${INTENT_REGISTRY_CONTRACT.deploymentExplorerUrl}.`,
     ],
     payload,
   };
@@ -162,8 +173,8 @@ function buildVerifiableIntent(intent) {
     verification: intent.verification,
     registry: {
       ...buildRegistryPaths(intent.id),
-      mode: "json-registry",
-      attestationMode: "offchain-helper",
+      mode: REGISTRY_MODE,
+      attestationMode: REGISTRY_ATTESTATION_MODE,
     },
   };
 }
@@ -171,8 +182,8 @@ function buildVerifiableIntent(intent) {
 function refreshArtifacts(intent) {
   intent.registry = {
     ...buildRegistryPaths(intent.id),
-    mode: "json-registry",
-    attestationMode: "offchain-helper",
+    mode: REGISTRY_MODE,
+    attestationMode: REGISTRY_ATTESTATION_MODE,
     attestationStatus: intent.settlement?.payment ? "ready" : "pending-payment",
   };
   intent.attestation = buildAttestation(intent);
@@ -289,15 +300,11 @@ export function recordIntentSettlement(intentId, payment = {}) {
   return updateIntent(intentId, (intent) => {
     const fundingSource = payment.yieldPowered ? "yield" : "principal";
     const principalPreserved = Boolean(payment.yieldPowered);
-    const proofStatus = payment.proofStatus || (
-      payment.method === "yield-payment"
-        ? "yield-helper"
-        : payment.verified === false
-          ? "pending-onchain"
-          : "verified-onchain"
-    );
+    const proofStatus = resolvePaymentProofStatus(payment);
+    const verified = isExecutionUnlockedPayment(payment);
+    const currentStatus = intent.status === "completed" ? "completed" : "payment_required";
 
-    intent.status = "settled";
+    intent.status = verified ? "settled" : currentStatus;
     intent.settlement = {
       ...intent.settlement,
       payment: {
@@ -306,7 +313,7 @@ export function recordIntentSettlement(intentId, payment = {}) {
         amount: String(payment.amount || "0"),
         payer: payment.payer || "unknown",
         method: payment.method || "unknown",
-        verified: payment.verified !== false,
+        verified,
         explorerUrl: payment.explorerUrl || null,
         yieldPowered: Boolean(payment.yieldPowered),
         fundingSource,
@@ -314,7 +321,12 @@ export function recordIntentSettlement(intentId, payment = {}) {
         proofStatus,
         verificationDetails: payment.verificationDetails || null,
         quote: payment.quote || null,
-        settledAt: new Date().toISOString(),
+        ...(verified
+          ? { settledAt: new Date().toISOString() }
+          : {
+              rejectedAt: new Date().toISOString(),
+              error: getPaymentFailureReason({ ...payment, proofStatus, verified }),
+            }),
       },
     };
     intent.verification = {
@@ -325,6 +337,13 @@ export function recordIntentSettlement(intentId, payment = {}) {
 }
 
 export function completeIntent(intentId, { ledgerEntryId, paymentTxid, result, revenueDistribution }) {
+  const intent = getIntent(intentId);
+  if (!intent) return null;
+  if (!isExecutionUnlockedPayment(intent.settlement?.payment)) {
+    log.warn("IntentRegistry", `Refusing to complete ${intentId} without a verified payment proof.`);
+    return intent;
+  }
+
   return updateIntent(intentId, (intent) => {
     intent.status = "completed";
     intent.execution = {

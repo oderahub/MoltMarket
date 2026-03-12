@@ -167,17 +167,34 @@ function getRegistryLinks(output: unknown): Array<{ label: string; url: string }
   const registry = output.registry as Record<string, unknown>;
 
   const entries: Array<{ label: string; field: string }> = [
-    { label: 'Intent record', field: 'intent' },
-    { label: 'Attestation helper', field: 'attestation' },
-    { label: 'Settlement log', field: 'settlements' },
+    { label: 'Intent record (API)', field: 'intent' },
+    { label: 'Intent attestation (API)', field: 'attestation' },
+    { label: 'Settlement log (API)', field: 'settlements' },
   ];
 
-  return entries
+  const contract = isRecord(registry.contract) ? registry.contract : null;
+  const contractIdentifier = contract && typeof contract.identifier === 'string'
+    ? contract.identifier
+    : 'Deployed registry contract';
+  const contractExplorerUrl = contract && typeof contract.explorerUrl === 'string'
+    ? contract.explorerUrl
+    : null;
+
+  const links = entries
     .map(({ label, field }) => {
       const url = registry[field];
       return typeof url === 'string' && url.length > 0 ? { label, url } : null;
     })
     .filter((entry): entry is { label: string; url: string } => Boolean(entry));
+
+  if (contractExplorerUrl) {
+    links.unshift({
+      label: `Deployed registry contract · ${contractIdentifier}`,
+      url: contractExplorerUrl,
+    });
+  }
+
+  return links;
 }
 
 function getTransactions(output: unknown): TransactionItem[] {

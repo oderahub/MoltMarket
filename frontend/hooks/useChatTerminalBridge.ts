@@ -43,8 +43,23 @@ function getNarration(output: unknown): Record<string, unknown> | null {
 function getRegistryUrls(output: unknown): string[] {
   if (!isRecord(output) || !isRecord(output.registry)) return [];
 
-  const urls = [output.registry.intent, output.registry.attestation, output.registry.settlements];
+  const contract = isRecord(output.registry.contract) ? output.registry.contract : null;
+  const urls = [
+    output.registry.intent,
+    output.registry.attestation,
+    output.registry.settlements,
+    contract?.explorerUrl,
+  ];
   return urls.filter((value): value is string => typeof value === 'string' && value.startsWith('http'));
+}
+
+function getRegistryContractIdentifier(output: unknown): string | null {
+  if (!isRecord(output) || !isRecord(output.registry) || !isRecord(output.registry.contract)) {
+    return null;
+  }
+
+  const identifier = output.registry.contract.identifier;
+  return typeof identifier === 'string' ? identifier : null;
 }
 
 function getTransactionLines(output: unknown): string[] {
@@ -208,6 +223,11 @@ export function useChatTerminalBridge(
         const intent = getIntent(part.output);
         if (intent) {
           addLog(`[INTENT] ${JSON.stringify(intent).slice(0, 240)}`, 'system');
+        }
+
+        const registryContractIdentifier = getRegistryContractIdentifier(part.output);
+        if (registryContractIdentifier) {
+          addLog(`[REGISTRY] ${registryContractIdentifier}`, 'system');
         }
 
         for (const url of getRegistryUrls(part.output)) {

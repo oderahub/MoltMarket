@@ -19,8 +19,12 @@ import config from "../config.js";
 import log from "../utils/logger.js";
 import {
   buildPaymentRequired,
+  buildPaymentResponse,
+  getPaymentFailureReason,
   getExplorerTxUrl,
+  isExecutionUnlockedPayment,
   resolveSettlementQuote,
+  PAYMENT_RESPONSE_HEADER,
 } from "../utils/x402.js";
 
 // Default facilitator URL from x402-stacks
@@ -40,6 +44,59 @@ const DEFAULT_FACILITATOR = "https://x402-backend-7eby.onrender.com";
 function readHeader(req, name) {
   const value = req.headers[name];
   return typeof value === "string" ? value : null;
+}
+
+function buildRejectedDirectTxidPayment({
+  txid,
+  selectedSettlement,
+  payer,
+  proofStatus,
+  verificationDetails,
+}) {
+  return {
+    txid,
+    amount: selectedSettlement.amount,
+    asset: selectedSettlement.asset,
+    payer,
+    explorerUrl: getExplorerTxUrl(txid),
+    method: "direct-txid",
+    verified: false,
+    fundingSource: "principal",
+    principalPreserved: false,
+    proofStatus,
+    verificationDetails,
+    quote: selectedSettlement,
+  };
+}
+
+function rejectInvalidDirectTxidProof(req, res, options) {
+  const { price, description, asset, acceptedAssets, intentId, selectedSettlement, payment } = options;
+  const errorReason = getPaymentFailureReason(payment);
+
+  log.warn("x402", `${errorReason} txid: ${payment.txid}`);
+  res.set(
+    PAYMENT_RESPONSE_HEADER,
+    buildPaymentResponse({
+      success: false,
+      txid: payment.txid,
+      asset: selectedSettlement.asset,
+      intentId: intentId || "",
+      errorReason,
+    })
+  );
+
+  return handlePaymentRequired(req, res, {
+    price,
+    description,
+    asset,
+    acceptedAssets,
+    intentId,
+    selectedSettlement,
+    paymentFailure: {
+      ...payment,
+      error: errorReason,
+    },
+  });
 }
 
 export function paymentGate({
@@ -103,71 +160,102 @@ export function paymentGate({
           const assetMatchConfirmed = expectedContract
             ? observedContract === expectedContract
             : txData.tx_type === "token_transfer";
-          log.success("x402", `Payment verified on-chain! Status: ${txData.tx_status}`);
+          const txStatusConfirmed = txData.tx_status === "success";
 
-          // Attach payment info
-          req.x402 = {
-            txid: directTxid,
-            amount: selectedSettlement.amount,
-            asset: selectedSettlement.asset,
-            payer: txData.sender_address || "unknown",
-            explorerUrl: getExplorerTxUrl(directTxid),
-            method: "direct-txid",
-            verified: true,
-            fundingSource: "principal",
-            principalPreserved: false,
-            proofStatus: assetMatchConfirmed ? "verified-onchain" : "tx-found-asset-unconfirmed",
-            verificationDetails: {
-              txStatus: txData.tx_status,
-              txType: txData.tx_type,
-              expectedContract,
-              observedContract,
-              assetMatchConfirmed,
-            },
-            quote: selectedSettlement,
-          };
+          const payment = txStatusConfirmed && assetMatchConfirmed
+            ? {
+                txid: directTxid,
+                amount: selectedSettlement.amount,
+                asset: selectedSettlement.asset,
+                payer: txData.sender_address || "unknown",
+                explorerUrl: getExplorerTxUrl(directTxid),
+                method: "direct-txid",
+                verified: true,
+                fundingSource: "principal",
+                principalPreserved: false,
+                proofStatus: "verified-onchain",
+                verificationDetails: {
+                  txStatus: txData.tx_status,
+                  txType: txData.tx_type,
+                  expectedContract,
+                  observedContract,
+                  assetMatchConfirmed,
+                  txStatusConfirmed,
+                },
+                quote: selectedSettlement,
+              }
+            : buildRejectedDirectTxidPayment({
+                txid: directTxid,
+                selectedSettlement,
+                payer: txData.sender_address || "unknown",
+                proofStatus: assetMatchConfirmed
+                  ? "tx-status-not-success"
+                  : "tx-found-asset-unconfirmed",
+                verificationDetails: {
+                  txStatus: txData.tx_status,
+                  txType: txData.tx_type,
+                  expectedContract,
+                  observedContract,
+                  assetMatchConfirmed,
+                  txStatusConfirmed,
+                },
+              });
+
+          if (!isExecutionUnlockedPayment(payment)) {
+            return rejectInvalidDirectTxidProof(req, res, {
+              price,
+              description,
+              asset,
+              acceptedAssets,
+              intentId,
+              selectedSettlement,
+              payment,
+            });
+          }
+
+          log.success("x402", `Payment verified on-chain! Status: ${txData.tx_status}`);
+          req.x402 = payment;
           return next();
         } else {
-          log.warn("x402", `Txid ${directTxid} not found yet (may be pending). Accepting anyway.`);
-          req.x402 = {
-            txid: directTxid,
-            amount: selectedSettlement.amount,
-            asset: selectedSettlement.asset,
-            payer: "pending",
-            explorerUrl: getExplorerTxUrl(directTxid),
-            method: "direct-txid",
-            verified: false,
-            fundingSource: "principal",
-            principalPreserved: false,
-            proofStatus: "pending-onchain",
-            verificationDetails: {
-              txStatus: "pending-or-not-found",
-              expectedContract: selectedSettlement.contractAddress || null,
-            },
-            quote: selectedSettlement,
-          };
-          return next();
+          return rejectInvalidDirectTxidProof(req, res, {
+            price,
+            description,
+            asset,
+            acceptedAssets,
+            intentId,
+            selectedSettlement,
+            payment: buildRejectedDirectTxidPayment({
+              txid: directTxid,
+              selectedSettlement,
+              payer: "pending",
+              proofStatus: "pending-onchain",
+              verificationDetails: {
+                txStatus: "pending-or-not-found",
+                expectedContract: selectedSettlement.contractAddress || null,
+                httpStatus: verifyRes.status,
+              },
+            }),
+          });
         }
       } catch (err) {
-        log.warn("x402", `Could not verify txid: ${err.message}. Accepting anyway.`);
-        req.x402 = {
-          txid: directTxid,
-          amount: selectedSettlement.amount,
-          asset: selectedSettlement.asset,
-          payer: "unverified",
-          explorerUrl: getExplorerTxUrl(directTxid),
-          method: "direct-txid",
-          verified: false,
-          fundingSource: "principal",
-          principalPreserved: false,
-          proofStatus: "verification-unavailable",
-          verificationDetails: {
-            error: err.message,
-            expectedContract: selectedSettlement.contractAddress || null,
-          },
-          quote: selectedSettlement,
-        };
-        return next();
+        return rejectInvalidDirectTxidProof(req, res, {
+          price,
+          description,
+          asset,
+          acceptedAssets,
+          intentId,
+          selectedSettlement,
+          payment: buildRejectedDirectTxidPayment({
+            txid: directTxid,
+            selectedSettlement,
+            payer: "unverified",
+            proofStatus: "verification-unavailable",
+            verificationDetails: {
+              error: err.message,
+              expectedContract: selectedSettlement.contractAddress || null,
+            },
+          }),
+        });
       }
     }
 
@@ -255,7 +343,11 @@ export function paymentGate({
  * Handle explicit payment requirements so clients receive the selected quote,
  * verifiable intent payload, and registry paths before settlement.
  */
-function handlePaymentRequired(req, res, { price, description, asset, acceptedAssets, intentId, selectedSettlement }) {
+function handlePaymentRequired(
+  req,
+  res,
+  { price, description, asset, acceptedAssets, intentId, selectedSettlement, paymentFailure = null }
+) {
   const paymentRequired = buildPaymentRequired({
     payTo: config.platformAddress,
     amount: price,
@@ -288,6 +380,19 @@ function handlePaymentRequired(req, res, { price, description, asset, acceptedAs
           ? ["payment-signature", "x-payment-txid", "x-yield-payment"]
           : ["payment-signature", "x-payment-txid"],
   };
+
+  if (paymentFailure) {
+    paymentRequired.error = paymentFailure.error;
+    paymentRequired.payment = {
+      txid: paymentFailure.txid,
+      asset: paymentFailure.asset,
+      method: paymentFailure.method,
+      verified: false,
+      proofStatus: paymentFailure.proofStatus,
+      verificationDetails: paymentFailure.verificationDetails || null,
+      explorerUrl: paymentFailure.explorerUrl || null,
+    };
+  }
 
   // Set header as per x402 spec
   res.set("payment-required", Buffer.from(JSON.stringify(paymentRequired)).toString("base64"));

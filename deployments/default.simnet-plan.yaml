@@ -1,0 +1,14 @@
+---
+id: 0
+name: Simnet validation plan
+network: simnet
+plan:
+  batches:
+    - id: 0
+      transactions:
+        - emulated-contract-publish:
+            contract-name: verifiable-intent-registry
+            emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+            path: contracts/verifiable-intent-registry.clar
+            clarity-version: 4
+      epoch: '3.3'

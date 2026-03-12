@@ -1,0 +1,2606 @@
+[
+  {
+    "id": "intent-1773246714523-1",
+    "kind": "skill-execution",
+    "skillId": "bounty-executor",
+    "skillName": "Moltbot Bounty Executor",
+    "action": "execute",
+    "status": "payment_required",
+    "createdAt": "2026-03-11T16:31:54.523Z",
+    "updatedAt": "2026-03-11T16:31:54.530Z",
+    "request": {
+      "method": "POST",
+      "path": "/skills/bounty-executor/execute"
+    },
+    "input": {
+      "task": "composite deep-wallet audit for the operator",
+      "address": "ST2J8EVYHP5VGNSVR94J7K6JPHXYVK5FH2QY3W0M1"
+    },
+    "metadata": {
+      "requestedAsset": "USDCx",
+      "preferredAsset": null,
+      "requestedPaymentMethod": null
+    },
+    "verification": {
+      "inputDigest": "878dda5daebd7fdadd5538d65ed5d210251268913acad328b95e47c084339579",
+      "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+      "intentDigest": "26f38fd58b79c38990b1c5d608eccbf5aa22b2c066d5a24b6f1246d8a1736fd3"
+    },
+    "settlement": {
+      "network": "testnet",
+      "options": [
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "USDCx",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "tokenType": "sip-010",
+          "decimals": 6
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "STX",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX"
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "800",
+          "asset": "sBTC",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "tokenType": "sip-010"
+        }
+      ],
+      "paymentRequestPath": "/skills/bounty-executor/execute",
+      "payment": null
+    },
+    "execution": null,
+    "registry": {
+      "intentPath": "/registry/intents/intent-1773246714523-1",
+      "attestationPath": "/registry/intents/intent-1773246714523-1/attestation",
+      "settlementsPath": "/registry/settlements?intentId=intent-1773246714523-1",
+      "contract": {
+        "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+        "name": "verifiable-intent-registry",
+        "path": "contracts/verifiable-intent-registry.clar",
+        "network": "testnet",
+        "deploymentStatus": "deployed-testnet",
+        "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+        "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+      },
+      "mode": "api-attested",
+      "attestationMode": "express-registry-api",
+      "attestationStatus": "pending-payment"
+    },
+    "attestation": {
+      "version": 1,
+      "type": "backend-intent-attestation",
+      "mode": "api-attested",
+      "helper": "express-registry-api",
+      "status": "pending-payment",
+      "digest": "ac3f4665e863edf9403c63f58b321dbcbc836082ca58c1cddf6c1a9344443c4c",
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773246714523-1",
+        "attestationPath": "/registry/intents/intent-1773246714523-1/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773246714523-1",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        }
+      },
+      "notes": [
+        "Intent and attestation records are served by the Express registry API for the live hero flow.",
+        "Deployed Stacks testnet contract reference: ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry.",
+        "Verify the contract publication at https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet."
+      ],
+      "payload": {
+        "intentId": "intent-1773246714523-1",
+        "skillId": "bounty-executor",
+        "status": "payment_required",
+        "request": {
+          "method": "POST",
+          "path": "/skills/bounty-executor/execute"
+        },
+        "verification": {
+          "inputDigest": "878dda5daebd7fdadd5538d65ed5d210251268913acad328b95e47c084339579",
+          "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+          "intentDigest": "26f38fd58b79c38990b1c5d608eccbf5aa22b2c066d5a24b6f1246d8a1736fd3"
+        },
+        "payment": null
+      }
+    },
+    "verifiableIntent": {
+      "version": 1,
+      "type": "verifiable-intent",
+      "intentId": "intent-1773246714523-1",
+      "skillId": "bounty-executor",
+      "skillName": "Moltbot Bounty Executor",
+      "action": "execute",
+      "createdAt": "2026-03-11T16:31:54.523Z",
+      "updatedAt": "2026-03-11T16:31:54.530Z",
+      "request": {
+        "method": "POST",
+        "path": "/skills/bounty-executor/execute"
+      },
+      "input": {
+        "task": "composite deep-wallet audit for the operator",
+        "address": "ST2J8EVYHP5VGNSVR94J7K6JPHXYVK5FH2QY3W0M1"
+      },
+      "metadata": {
+        "requestedAsset": "USDCx",
+        "preferredAsset": null,
+        "requestedPaymentMethod": null
+      },
+      "network": "testnet",
+      "spendLimits": [
+        {
+          "asset": "USDCx",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 6,
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "acceptedProofHeaders": [
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "STX",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "native",
+          "decimals": 6,
+          "contractAddress": null,
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "sBTC",
+          "maxAmount": "800",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 8,
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid",
+            "x-yield-payment"
+          ]
+        }
+      ],
+      "verification": {
+        "inputDigest": "878dda5daebd7fdadd5538d65ed5d210251268913acad328b95e47c084339579",
+        "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+        "intentDigest": "26f38fd58b79c38990b1c5d608eccbf5aa22b2c066d5a24b6f1246d8a1736fd3"
+      },
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773246714523-1",
+        "attestationPath": "/registry/intents/intent-1773246714523-1/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773246714523-1",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        },
+        "mode": "api-attested",
+        "attestationMode": "express-registry-api"
+      }
+    }
+  },
+  {
+    "id": "intent-1773247066444-2",
+    "kind": "skill-execution",
+    "skillId": "bounty-executor",
+    "skillName": "Moltbot Bounty Executor",
+    "action": "execute",
+    "status": "payment_required",
+    "createdAt": "2026-03-11T16:37:46.440Z",
+    "updatedAt": "2026-03-11T16:37:46.471Z",
+    "request": {
+      "method": "POST",
+      "path": "/skills/bounty-executor/execute"
+    },
+    "input": {
+      "task": "high-value intelligence payout, compare ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S and ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10, preserve stSTXbtc principal, spend harvested sBTC for execution, include verifiable intent or registry references",
+      "addresses": [
+        "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S",
+        "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10"
+      ]
+    },
+    "metadata": {
+      "requestedAsset": "USDCx",
+      "preferredAsset": null,
+      "requestedPaymentMethod": null
+    },
+    "verification": {
+      "inputDigest": "f5fdbfa58022ef4bf3bef17580b62e2fc519d06e2b10a0ef9889f4bb4e23fd88",
+      "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+      "intentDigest": "e13453dbdc46f83ac4f607d6ce3cec4ab2f452f8dcd3139560055f1a5ca649a7"
+    },
+    "settlement": {
+      "network": "testnet",
+      "options": [
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "USDCx",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "tokenType": "sip-010",
+          "decimals": 6
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "STX",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX"
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "800",
+          "asset": "sBTC",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "tokenType": "sip-010"
+        }
+      ],
+      "paymentRequestPath": "/skills/bounty-executor/execute",
+      "payment": null
+    },
+    "execution": null,
+    "registry": {
+      "intentPath": "/registry/intents/intent-1773247066444-2",
+      "attestationPath": "/registry/intents/intent-1773247066444-2/attestation",
+      "settlementsPath": "/registry/settlements?intentId=intent-1773247066444-2",
+      "contract": {
+        "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+        "name": "verifiable-intent-registry",
+        "path": "contracts/verifiable-intent-registry.clar",
+        "network": "testnet",
+        "deploymentStatus": "deployed-testnet",
+        "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+        "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+      },
+      "mode": "api-attested",
+      "attestationMode": "express-registry-api",
+      "attestationStatus": "pending-payment"
+    },
+    "attestation": {
+      "version": 1,
+      "type": "backend-intent-attestation",
+      "mode": "api-attested",
+      "helper": "express-registry-api",
+      "status": "pending-payment",
+      "digest": "a7691fabf0dea14e49e613b4412ac80f38b1b2964a034fb3a1bba21f4025732d",
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773247066444-2",
+        "attestationPath": "/registry/intents/intent-1773247066444-2/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773247066444-2",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        }
+      },
+      "notes": [
+        "Intent and attestation records are served by the Express registry API for the live hero flow.",
+        "Deployed Stacks testnet contract reference: ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry.",
+        "Verify the contract publication at https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet."
+      ],
+      "payload": {
+        "intentId": "intent-1773247066444-2",
+        "skillId": "bounty-executor",
+        "status": "payment_required",
+        "request": {
+          "method": "POST",
+          "path": "/skills/bounty-executor/execute"
+        },
+        "verification": {
+          "inputDigest": "f5fdbfa58022ef4bf3bef17580b62e2fc519d06e2b10a0ef9889f4bb4e23fd88",
+          "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+          "intentDigest": "e13453dbdc46f83ac4f607d6ce3cec4ab2f452f8dcd3139560055f1a5ca649a7"
+        },
+        "payment": null
+      }
+    },
+    "verifiableIntent": {
+      "version": 1,
+      "type": "verifiable-intent",
+      "intentId": "intent-1773247066444-2",
+      "skillId": "bounty-executor",
+      "skillName": "Moltbot Bounty Executor",
+      "action": "execute",
+      "createdAt": "2026-03-11T16:37:46.440Z",
+      "updatedAt": "2026-03-11T16:37:46.471Z",
+      "request": {
+        "method": "POST",
+        "path": "/skills/bounty-executor/execute"
+      },
+      "input": {
+        "task": "high-value intelligence payout, compare ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S and ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10, preserve stSTXbtc principal, spend harvested sBTC for execution, include verifiable intent or registry references",
+        "addresses": [
+          "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S",
+          "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10"
+        ]
+      },
+      "metadata": {
+        "requestedAsset": "USDCx",
+        "preferredAsset": null,
+        "requestedPaymentMethod": null
+      },
+      "network": "testnet",
+      "spendLimits": [
+        {
+          "asset": "USDCx",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 6,
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "acceptedProofHeaders": [
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "STX",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "native",
+          "decimals": 6,
+          "contractAddress": null,
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "sBTC",
+          "maxAmount": "800",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 8,
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid",
+            "x-yield-payment"
+          ]
+        }
+      ],
+      "verification": {
+        "inputDigest": "f5fdbfa58022ef4bf3bef17580b62e2fc519d06e2b10a0ef9889f4bb4e23fd88",
+        "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+        "intentDigest": "e13453dbdc46f83ac4f607d6ce3cec4ab2f452f8dcd3139560055f1a5ca649a7"
+      },
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773247066444-2",
+        "attestationPath": "/registry/intents/intent-1773247066444-2/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773247066444-2",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        },
+        "mode": "api-attested",
+        "attestationMode": "express-registry-api"
+      }
+    }
+  },
+  {
+    "id": "intent-1773247228432-3",
+    "kind": "skill-execution",
+    "skillId": "bounty-executor",
+    "skillName": "Moltbot Bounty Executor",
+    "action": "execute",
+    "status": "payment_required",
+    "createdAt": "2026-03-11T16:40:28.432Z",
+    "updatedAt": "2026-03-11T16:40:28.442Z",
+    "request": {
+      "method": "POST",
+      "path": "/skills/bounty-executor/execute"
+    },
+    "input": {
+      "task": "Settle bounty HERO-VERIFY-002 for a high-value intelligence payout. Preserve stSTXbtc principal, spend harvested sBTC for execution, and include any verifiable intent or registry references returned by the backend.",
+      "addresses": [
+        "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S",
+        "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10"
+      ]
+    },
+    "metadata": {
+      "requestedAsset": "USDCx",
+      "preferredAsset": null,
+      "requestedPaymentMethod": null
+    },
+    "verification": {
+      "inputDigest": "be5bbb17bd99c7c627740804535916fa6fc81fab8542698b9633a39e8a248e58",
+      "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+      "intentDigest": "a0e89fbfed0920eac90ee1fccb02fa892d63b6441d5c5b96439ff90201027b46"
+    },
+    "settlement": {
+      "network": "testnet",
+      "options": [
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "USDCx",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "tokenType": "sip-010",
+          "decimals": 6
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "STX",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX"
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "800",
+          "asset": "sBTC",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "tokenType": "sip-010"
+        }
+      ],
+      "paymentRequestPath": "/skills/bounty-executor/execute",
+      "payment": null
+    },
+    "execution": null,
+    "registry": {
+      "intentPath": "/registry/intents/intent-1773247228432-3",
+      "attestationPath": "/registry/intents/intent-1773247228432-3/attestation",
+      "settlementsPath": "/registry/settlements?intentId=intent-1773247228432-3",
+      "contract": {
+        "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+        "name": "verifiable-intent-registry",
+        "path": "contracts/verifiable-intent-registry.clar",
+        "network": "testnet",
+        "deploymentStatus": "deployed-testnet",
+        "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+        "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+      },
+      "mode": "api-attested",
+      "attestationMode": "express-registry-api",
+      "attestationStatus": "pending-payment"
+    },
+    "attestation": {
+      "version": 1,
+      "type": "backend-intent-attestation",
+      "mode": "api-attested",
+      "helper": "express-registry-api",
+      "status": "pending-payment",
+      "digest": "dc02289b7fabc2c7e9e6fc6ba2361471dc508248b496a4f3f4420a0211c8cfe1",
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773247228432-3",
+        "attestationPath": "/registry/intents/intent-1773247228432-3/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773247228432-3",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        }
+      },
+      "notes": [
+        "Intent and attestation records are served by the Express registry API for the live hero flow.",
+        "Deployed Stacks testnet contract reference: ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry.",
+        "Verify the contract publication at https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet."
+      ],
+      "payload": {
+        "intentId": "intent-1773247228432-3",
+        "skillId": "bounty-executor",
+        "status": "payment_required",
+        "request": {
+          "method": "POST",
+          "path": "/skills/bounty-executor/execute"
+        },
+        "verification": {
+          "inputDigest": "be5bbb17bd99c7c627740804535916fa6fc81fab8542698b9633a39e8a248e58",
+          "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+          "intentDigest": "a0e89fbfed0920eac90ee1fccb02fa892d63b6441d5c5b96439ff90201027b46"
+        },
+        "payment": null
+      }
+    },
+    "verifiableIntent": {
+      "version": 1,
+      "type": "verifiable-intent",
+      "intentId": "intent-1773247228432-3",
+      "skillId": "bounty-executor",
+      "skillName": "Moltbot Bounty Executor",
+      "action": "execute",
+      "createdAt": "2026-03-11T16:40:28.432Z",
+      "updatedAt": "2026-03-11T16:40:28.442Z",
+      "request": {
+        "method": "POST",
+        "path": "/skills/bounty-executor/execute"
+      },
+      "input": {
+        "task": "Settle bounty HERO-VERIFY-002 for a high-value intelligence payout. Preserve stSTXbtc principal, spend harvested sBTC for execution, and include any verifiable intent or registry references returned by the backend.",
+        "addresses": [
+          "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S",
+          "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10"
+        ]
+      },
+      "metadata": {
+        "requestedAsset": "USDCx",
+        "preferredAsset": null,
+        "requestedPaymentMethod": null
+      },
+      "network": "testnet",
+      "spendLimits": [
+        {
+          "asset": "USDCx",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 6,
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "acceptedProofHeaders": [
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "STX",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "native",
+          "decimals": 6,
+          "contractAddress": null,
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "sBTC",
+          "maxAmount": "800",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 8,
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid",
+            "x-yield-payment"
+          ]
+        }
+      ],
+      "verification": {
+        "inputDigest": "be5bbb17bd99c7c627740804535916fa6fc81fab8542698b9633a39e8a248e58",
+        "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+        "intentDigest": "a0e89fbfed0920eac90ee1fccb02fa892d63b6441d5c5b96439ff90201027b46"
+      },
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773247228432-3",
+        "attestationPath": "/registry/intents/intent-1773247228432-3/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773247228432-3",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        },
+        "mode": "api-attested",
+        "attestationMode": "express-registry-api"
+      }
+    }
+  },
+  {
+    "id": "intent-1773254183619-4",
+    "kind": "skill-execution",
+    "skillId": "bounty-executor",
+    "skillName": "Moltbot Bounty Executor",
+    "action": "execute",
+    "status": "completed",
+    "createdAt": "2026-03-11T18:36:23.619Z",
+    "updatedAt": "2026-03-11T18:37:01.176Z",
+    "request": {
+      "method": "POST",
+      "path": "/skills/bounty-executor/execute"
+    },
+    "input": {
+      "task": "wallet activity",
+      "address": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"
+    },
+    "metadata": {
+      "requestedAsset": "USDCx",
+      "preferredAsset": null,
+      "requestedPaymentMethod": "direct-txid"
+    },
+    "verification": {
+      "inputDigest": "720dff637a75bbb376e47778fa7c300d0b67fce7679a769e1ecaac9b9288fead",
+      "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+      "intentDigest": "babb019b807c0c1681912c7a171e430d859a0e8ed224f3ab244d493729e2af7e",
+      "settlementDigest": "e3e326ce87d234de66cf9fcd51e9d4972a7e0320e7d13badc2087e012fa48870"
+    },
+    "settlement": {
+      "network": "testnet",
+      "options": [
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "USDCx",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "tokenType": "sip-010",
+          "decimals": 6
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "STX",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX"
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "800",
+          "asset": "sBTC",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "tokenType": "sip-010"
+        }
+      ],
+      "paymentRequestPath": "/skills/bounty-executor/execute",
+      "payment": {
+        "txid": "aa31acf16640206bb6bbca4219aced1c54fd30d7ba24d46df697183431a95db9",
+        "asset": "USDCx",
+        "amount": "8000",
+        "payer": "ST1PWEJQ5ZKYHF600XPADABKF83E4STKNAJVYXJWH",
+        "method": "direct-txid",
+        "verified": true,
+        "explorerUrl": "https://explorer.hiro.so/txid/aa31acf16640206bb6bbca4219aced1c54fd30d7ba24d46df697183431a95db9?chain=testnet",
+        "yieldPowered": false,
+        "fundingSource": "principal",
+        "principalPreserved": false,
+        "proofStatus": "tx-found-asset-unconfirmed",
+        "verificationDetails": {
+          "txStatus": "success",
+          "txType": "token_transfer",
+          "expectedContract": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "observedContract": null,
+          "assetMatchConfirmed": false
+        },
+        "quote": {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "USDCx",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "tokenType": "sip-010",
+          "decimals": 6
+        },
+        "settledAt": "2026-03-11T18:36:57.824Z"
+      }
+    },
+    "execution": {
+      "completedAt": "2026-03-11T18:37:01.176Z",
+      "ledgerEntryId": 1,
+      "paymentTxid": "aa31acf16640206bb6bbca4219aced1c54fd30d7ba24d46df697183431a95db9",
+      "resultDigest": "7798feca785ad8966b2672cbfaebae6949ed529a41456f224ad6b0d7eac19c9b",
+      "revenueDistributionDigest": "f4b4f5ee1dc7f947c39a455bfd8452ee0d2db1afed6d0a96dd41b3ea25c49e6e"
+    },
+    "registry": {
+      "intentPath": "/registry/intents/intent-1773254183619-4",
+      "attestationPath": "/registry/intents/intent-1773254183619-4/attestation",
+      "settlementsPath": "/registry/settlements?intentId=intent-1773254183619-4",
+      "contract": {
+        "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+        "name": "verifiable-intent-registry",
+        "path": "contracts/verifiable-intent-registry.clar",
+        "network": "testnet",
+        "deploymentStatus": "deployed-testnet",
+        "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+        "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+      },
+      "mode": "api-attested",
+      "attestationMode": "express-registry-api",
+      "attestationStatus": "ready"
+    },
+    "attestation": {
+      "version": 1,
+      "type": "backend-intent-attestation",
+      "mode": "api-attested",
+      "helper": "express-registry-api",
+      "status": "ready",
+      "digest": "6b2fa23ecdefa20acd65b06c58c8fee3e63819355cc12ff5454391d3362d1292",
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773254183619-4",
+        "attestationPath": "/registry/intents/intent-1773254183619-4/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773254183619-4",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        }
+      },
+      "notes": [
+        "Intent and attestation records are served by the Express registry API for the live hero flow.",
+        "Deployed Stacks testnet contract reference: ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry.",
+        "Verify the contract publication at https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet."
+      ],
+      "payload": {
+        "intentId": "intent-1773254183619-4",
+        "skillId": "bounty-executor",
+        "status": "completed",
+        "request": {
+          "method": "POST",
+          "path": "/skills/bounty-executor/execute"
+        },
+        "verification": {
+          "inputDigest": "720dff637a75bbb376e47778fa7c300d0b67fce7679a769e1ecaac9b9288fead",
+          "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+          "intentDigest": "babb019b807c0c1681912c7a171e430d859a0e8ed224f3ab244d493729e2af7e",
+          "settlementDigest": "e3e326ce87d234de66cf9fcd51e9d4972a7e0320e7d13badc2087e012fa48870"
+        },
+        "payment": {
+          "txid": "aa31acf16640206bb6bbca4219aced1c54fd30d7ba24d46df697183431a95db9",
+          "asset": "USDCx",
+          "amount": "8000",
+          "method": "direct-txid",
+          "fundingSource": "principal",
+          "principalPreserved": false,
+          "proofStatus": "tx-found-asset-unconfirmed"
+        }
+      }
+    },
+    "verifiableIntent": {
+      "version": 1,
+      "type": "verifiable-intent",
+      "intentId": "intent-1773254183619-4",
+      "skillId": "bounty-executor",
+      "skillName": "Moltbot Bounty Executor",
+      "action": "execute",
+      "createdAt": "2026-03-11T18:36:23.619Z",
+      "updatedAt": "2026-03-11T18:37:01.176Z",
+      "request": {
+        "method": "POST",
+        "path": "/skills/bounty-executor/execute"
+      },
+      "input": {
+        "task": "wallet activity",
+        "address": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"
+      },
+      "metadata": {
+        "requestedAsset": "USDCx",
+        "preferredAsset": null,
+        "requestedPaymentMethod": "direct-txid"
+      },
+      "network": "testnet",
+      "spendLimits": [
+        {
+          "asset": "USDCx",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 6,
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "acceptedProofHeaders": [
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "STX",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "native",
+          "decimals": 6,
+          "contractAddress": null,
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "sBTC",
+          "maxAmount": "800",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 8,
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid",
+            "x-yield-payment"
+          ]
+        }
+      ],
+      "verification": {
+        "inputDigest": "720dff637a75bbb376e47778fa7c300d0b67fce7679a769e1ecaac9b9288fead",
+        "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+        "intentDigest": "babb019b807c0c1681912c7a171e430d859a0e8ed224f3ab244d493729e2af7e",
+        "settlementDigest": "e3e326ce87d234de66cf9fcd51e9d4972a7e0320e7d13badc2087e012fa48870"
+      },
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773254183619-4",
+        "attestationPath": "/registry/intents/intent-1773254183619-4/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773254183619-4",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        },
+        "mode": "api-attested",
+        "attestationMode": "express-registry-api"
+      }
+    }
+  },
+  {
+    "id": "intent-1773276586100-5",
+    "kind": "skill-execution",
+    "skillId": "alpha-leak",
+    "skillName": "Alpha Signal Feed",
+    "action": "execute",
+    "status": "payment_required",
+    "createdAt": "2026-03-12T00:49:46.100Z",
+    "updatedAt": "2026-03-12T00:49:46.135Z",
+    "request": {
+      "method": "POST",
+      "path": "/skills/alpha-leak/execute"
+    },
+    "input": {
+      "task": "live-proof-validation"
+    },
+    "metadata": {
+      "requestedAsset": "USDCx",
+      "preferredAsset": null,
+      "requestedPaymentMethod": "direct-txid"
+    },
+    "verification": {
+      "inputDigest": "1d1418f36541bc9bfa82fd84ffac9e3c3dc02a4ed3586ef586b1e1ef79d399d6",
+      "quoteDigest": "c99507542db8ed6dc8ca8b38bd98b4b45152c57c8e385c8685487ab80ce06fef",
+      "intentDigest": "2da76694cce02415b8f6ef95ad5020b4eac0a413221b85bb479cda7632b9b4f2"
+    },
+    "settlement": {
+      "network": "testnet",
+      "options": [
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "10000",
+          "asset": "STX",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.01 STX"
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "1000",
+          "asset": "sBTC",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "1,000 sats",
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "tokenType": "sip-010"
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "10000",
+          "asset": "USDCx",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.01 USDCx",
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "tokenType": "sip-010",
+          "decimals": 6
+        }
+      ],
+      "paymentRequestPath": "/skills/alpha-leak/execute",
+      "payment": null
+    },
+    "execution": null,
+    "registry": {
+      "intentPath": "/registry/intents/intent-1773276586100-5",
+      "attestationPath": "/registry/intents/intent-1773276586100-5/attestation",
+      "settlementsPath": "/registry/settlements?intentId=intent-1773276586100-5",
+      "contract": {
+        "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+        "name": "verifiable-intent-registry",
+        "path": "contracts/verifiable-intent-registry.clar",
+        "network": "testnet",
+        "deploymentStatus": "deployed-testnet",
+        "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+        "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+      },
+      "mode": "api-attested",
+      "attestationMode": "express-registry-api",
+      "attestationStatus": "pending-payment"
+    },
+    "attestation": {
+      "version": 1,
+      "type": "backend-intent-attestation",
+      "mode": "api-attested",
+      "helper": "express-registry-api",
+      "status": "pending-payment",
+      "digest": "eef140d973a671b28a057741f3a4d650e9c821b65be84ba32c38890909a3de7b",
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773276586100-5",
+        "attestationPath": "/registry/intents/intent-1773276586100-5/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773276586100-5",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        }
+      },
+      "notes": [
+        "Intent and attestation records are served by the Express registry API for the live hero flow.",
+        "Deployed Stacks testnet contract reference: ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry.",
+        "Verify the contract publication at https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet."
+      ],
+      "payload": {
+        "intentId": "intent-1773276586100-5",
+        "skillId": "alpha-leak",
+        "status": "payment_required",
+        "request": {
+          "method": "POST",
+          "path": "/skills/alpha-leak/execute"
+        },
+        "verification": {
+          "inputDigest": "1d1418f36541bc9bfa82fd84ffac9e3c3dc02a4ed3586ef586b1e1ef79d399d6",
+          "quoteDigest": "c99507542db8ed6dc8ca8b38bd98b4b45152c57c8e385c8685487ab80ce06fef",
+          "intentDigest": "2da76694cce02415b8f6ef95ad5020b4eac0a413221b85bb479cda7632b9b4f2"
+        },
+        "payment": null
+      }
+    },
+    "verifiableIntent": {
+      "version": 1,
+      "type": "verifiable-intent",
+      "intentId": "intent-1773276586100-5",
+      "skillId": "alpha-leak",
+      "skillName": "Alpha Signal Feed",
+      "action": "execute",
+      "createdAt": "2026-03-12T00:49:46.100Z",
+      "updatedAt": "2026-03-12T00:49:46.135Z",
+      "request": {
+        "method": "POST",
+        "path": "/skills/alpha-leak/execute"
+      },
+      "input": {
+        "task": "live-proof-validation"
+      },
+      "metadata": {
+        "requestedAsset": "USDCx",
+        "preferredAsset": null,
+        "requestedPaymentMethod": "direct-txid"
+      },
+      "network": "testnet",
+      "spendLimits": [
+        {
+          "asset": "STX",
+          "maxAmount": "10000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "native",
+          "decimals": 6,
+          "contractAddress": null,
+          "maxTimeoutSeconds": 300,
+          "display": "0.01 STX",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "sBTC",
+          "maxAmount": "1000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 8,
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "maxTimeoutSeconds": 300,
+          "display": "1,000 sats",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid",
+            "x-yield-payment"
+          ]
+        },
+        {
+          "asset": "USDCx",
+          "maxAmount": "10000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 6,
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "maxTimeoutSeconds": 300,
+          "display": "0.01 USDCx",
+          "acceptedProofHeaders": [
+            "x-payment-txid"
+          ]
+        }
+      ],
+      "verification": {
+        "inputDigest": "1d1418f36541bc9bfa82fd84ffac9e3c3dc02a4ed3586ef586b1e1ef79d399d6",
+        "quoteDigest": "c99507542db8ed6dc8ca8b38bd98b4b45152c57c8e385c8685487ab80ce06fef",
+        "intentDigest": "2da76694cce02415b8f6ef95ad5020b4eac0a413221b85bb479cda7632b9b4f2"
+      },
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773276586100-5",
+        "attestationPath": "/registry/intents/intent-1773276586100-5/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773276586100-5",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        },
+        "mode": "api-attested",
+        "attestationMode": "express-registry-api"
+      }
+    }
+  },
+  {
+    "id": "intent-1773277139719-6",
+    "kind": "skill-execution",
+    "skillId": "bounty-executor",
+    "skillName": "Moltbot Bounty Executor",
+    "action": "execute",
+    "status": "completed",
+    "createdAt": "2026-03-12T00:58:59.719Z",
+    "updatedAt": "2026-03-12T01:00:50.823Z",
+    "request": {
+      "method": "POST",
+      "path": "/skills/bounty-executor/execute"
+    },
+    "input": {
+      "task": "wallet-activity bounty",
+      "address": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"
+    },
+    "metadata": {
+      "requestedAsset": "USDCx",
+      "preferredAsset": null,
+      "requestedPaymentMethod": "direct-txid"
+    },
+    "verification": {
+      "inputDigest": "7a43c180b535c4efdddf4a10ad5f45e8ed71fc978c91ab577ad8956247b72337",
+      "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+      "intentDigest": "8abcdcae9b1dbe4e3075b7b3f0f98b89f1e8d1628894c79d1aff8c954ca53565",
+      "settlementDigest": "6b0a71fdc7ec2d85b53f92430b4dfaec9f0c39d5c1079aa82f13a909ff3a4e19"
+    },
+    "settlement": {
+      "network": "testnet",
+      "options": [
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "USDCx",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "tokenType": "sip-010",
+          "decimals": 6
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "STX",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX"
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "800",
+          "asset": "sBTC",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "tokenType": "sip-010"
+        }
+      ],
+      "paymentRequestPath": "/skills/bounty-executor/execute",
+      "payment": {
+        "txid": "d53e59c925eb413c56e7380c91f482aead17a40680a161db5574068eb703e735",
+        "asset": "USDCx",
+        "amount": "8000",
+        "payer": "ST3TB3AJ0XMZ9S6CGY2CQ6R06H1Z6DJQ1SK5QGMWP",
+        "method": "direct-txid",
+        "verified": true,
+        "explorerUrl": "https://explorer.hiro.so/txid/d53e59c925eb413c56e7380c91f482aead17a40680a161db5574068eb703e735?chain=testnet",
+        "yieldPowered": false,
+        "fundingSource": "principal",
+        "principalPreserved": false,
+        "proofStatus": "verified-onchain",
+        "verificationDetails": {
+          "txStatus": "success",
+          "txType": "contract_call",
+          "expectedContract": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "observedContract": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "assetMatchConfirmed": true,
+          "txStatusConfirmed": true
+        },
+        "quote": {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "USDCx",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "tokenType": "sip-010",
+          "decimals": 6
+        },
+        "settledAt": "2026-03-12T01:00:47.736Z"
+      }
+    },
+    "execution": {
+      "completedAt": "2026-03-12T01:00:50.822Z",
+      "ledgerEntryId": 2,
+      "paymentTxid": "d53e59c925eb413c56e7380c91f482aead17a40680a161db5574068eb703e735",
+      "resultDigest": "c9e5422d5dbdf226ec8bf6c31e88bf9a46379dc7ebfd2611358bbebb024f324a",
+      "revenueDistributionDigest": "1afdb48274dc1af8008a4d3fcd26494bb98c6d74f47f80981b4de39fcb992bae"
+    },
+    "registry": {
+      "intentPath": "/registry/intents/intent-1773277139719-6",
+      "attestationPath": "/registry/intents/intent-1773277139719-6/attestation",
+      "settlementsPath": "/registry/settlements?intentId=intent-1773277139719-6",
+      "contract": {
+        "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+        "name": "verifiable-intent-registry",
+        "path": "contracts/verifiable-intent-registry.clar",
+        "network": "testnet",
+        "deploymentStatus": "deployed-testnet",
+        "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+        "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+      },
+      "mode": "api-attested",
+      "attestationMode": "express-registry-api",
+      "attestationStatus": "ready"
+    },
+    "attestation": {
+      "version": 1,
+      "type": "backend-intent-attestation",
+      "mode": "api-attested",
+      "helper": "express-registry-api",
+      "status": "ready",
+      "digest": "9dfb4526489beae046b7648296635965c3c826d1fcbb9034efda57a7ced5866e",
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773277139719-6",
+        "attestationPath": "/registry/intents/intent-1773277139719-6/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773277139719-6",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        }
+      },
+      "notes": [
+        "Intent and attestation records are served by the Express registry API for the live hero flow.",
+        "Deployed Stacks testnet contract reference: ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry.",
+        "Verify the contract publication at https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet."
+      ],
+      "payload": {
+        "intentId": "intent-1773277139719-6",
+        "skillId": "bounty-executor",
+        "status": "completed",
+        "request": {
+          "method": "POST",
+          "path": "/skills/bounty-executor/execute"
+        },
+        "verification": {
+          "inputDigest": "7a43c180b535c4efdddf4a10ad5f45e8ed71fc978c91ab577ad8956247b72337",
+          "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+          "intentDigest": "8abcdcae9b1dbe4e3075b7b3f0f98b89f1e8d1628894c79d1aff8c954ca53565",
+          "settlementDigest": "6b0a71fdc7ec2d85b53f92430b4dfaec9f0c39d5c1079aa82f13a909ff3a4e19"
+        },
+        "payment": {
+          "txid": "d53e59c925eb413c56e7380c91f482aead17a40680a161db5574068eb703e735",
+          "asset": "USDCx",
+          "amount": "8000",
+          "method": "direct-txid",
+          "fundingSource": "principal",
+          "principalPreserved": false,
+          "proofStatus": "verified-onchain"
+        }
+      }
+    },
+    "verifiableIntent": {
+      "version": 1,
+      "type": "verifiable-intent",
+      "intentId": "intent-1773277139719-6",
+      "skillId": "bounty-executor",
+      "skillName": "Moltbot Bounty Executor",
+      "action": "execute",
+      "createdAt": "2026-03-12T00:58:59.719Z",
+      "updatedAt": "2026-03-12T01:00:50.823Z",
+      "request": {
+        "method": "POST",
+        "path": "/skills/bounty-executor/execute"
+      },
+      "input": {
+        "task": "wallet-activity bounty",
+        "address": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"
+      },
+      "metadata": {
+        "requestedAsset": "USDCx",
+        "preferredAsset": null,
+        "requestedPaymentMethod": "direct-txid"
+      },
+      "network": "testnet",
+      "spendLimits": [
+        {
+          "asset": "USDCx",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 6,
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "acceptedProofHeaders": [
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "STX",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "native",
+          "decimals": 6,
+          "contractAddress": null,
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "sBTC",
+          "maxAmount": "800",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 8,
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid",
+            "x-yield-payment"
+          ]
+        }
+      ],
+      "verification": {
+        "inputDigest": "7a43c180b535c4efdddf4a10ad5f45e8ed71fc978c91ab577ad8956247b72337",
+        "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+        "intentDigest": "8abcdcae9b1dbe4e3075b7b3f0f98b89f1e8d1628894c79d1aff8c954ca53565",
+        "settlementDigest": "6b0a71fdc7ec2d85b53f92430b4dfaec9f0c39d5c1079aa82f13a909ff3a4e19"
+      },
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773277139719-6",
+        "attestationPath": "/registry/intents/intent-1773277139719-6/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773277139719-6",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        },
+        "mode": "api-attested",
+        "attestationMode": "express-registry-api"
+      }
+    }
+  },
+  {
+    "id": "intent-1773313797005-7",
+    "kind": "skill-execution",
+    "skillId": "bounty-executor",
+    "skillName": "Moltbot Bounty Executor",
+    "action": "execute",
+    "status": "payment_required",
+    "createdAt": "2026-03-12T11:09:57.005Z",
+    "updatedAt": "2026-03-12T11:09:57.045Z",
+    "request": {
+      "method": "POST",
+      "path": "/skills/bounty-executor/execute"
+    },
+    "input": {
+      "task": "wallet-activity"
+    },
+    "metadata": {
+      "requestedAsset": null,
+      "preferredAsset": null,
+      "requestedPaymentMethod": null
+    },
+    "verification": {
+      "inputDigest": "31adb77a199afa1529e15071c5547a7e76827dbaa0f1748bf3d22d6fffa274c4",
+      "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+      "intentDigest": "fbeb8ed929aabc1358098dc710b7d2fa7aeb5a3bd1c3d4ac7ad10abe4844b3c2"
+    },
+    "settlement": {
+      "network": "testnet",
+      "options": [
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "USDCx",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "tokenType": "sip-010",
+          "decimals": 6
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "STX",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX"
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "800",
+          "asset": "sBTC",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "tokenType": "sip-010"
+        }
+      ],
+      "paymentRequestPath": "/skills/bounty-executor/execute",
+      "payment": null
+    },
+    "execution": null,
+    "registry": {
+      "intentPath": "/registry/intents/intent-1773313797005-7",
+      "attestationPath": "/registry/intents/intent-1773313797005-7/attestation",
+      "settlementsPath": "/registry/settlements?intentId=intent-1773313797005-7",
+      "contract": {
+        "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+        "name": "verifiable-intent-registry",
+        "path": "contracts/verifiable-intent-registry.clar",
+        "network": "testnet",
+        "deploymentStatus": "deployed-testnet",
+        "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+        "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+      },
+      "mode": "api-attested",
+      "attestationMode": "express-registry-api",
+      "attestationStatus": "pending-payment"
+    },
+    "attestation": {
+      "version": 1,
+      "type": "backend-intent-attestation",
+      "mode": "api-attested",
+      "helper": "express-registry-api",
+      "status": "pending-payment",
+      "digest": "997de64d8638b11fff1c0c404c10f5142ba1285ac1edd6a7152c6bd905a5a3f5",
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773313797005-7",
+        "attestationPath": "/registry/intents/intent-1773313797005-7/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773313797005-7",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        }
+      },
+      "notes": [
+        "Intent and attestation records are served by the Express registry API for the live hero flow.",
+        "Deployed Stacks testnet contract reference: ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry.",
+        "Verify the contract publication at https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet."
+      ],
+      "payload": {
+        "intentId": "intent-1773313797005-7",
+        "skillId": "bounty-executor",
+        "status": "payment_required",
+        "request": {
+          "method": "POST",
+          "path": "/skills/bounty-executor/execute"
+        },
+        "verification": {
+          "inputDigest": "31adb77a199afa1529e15071c5547a7e76827dbaa0f1748bf3d22d6fffa274c4",
+          "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+          "intentDigest": "fbeb8ed929aabc1358098dc710b7d2fa7aeb5a3bd1c3d4ac7ad10abe4844b3c2"
+        },
+        "payment": null
+      }
+    },
+    "verifiableIntent": {
+      "version": 1,
+      "type": "verifiable-intent",
+      "intentId": "intent-1773313797005-7",
+      "skillId": "bounty-executor",
+      "skillName": "Moltbot Bounty Executor",
+      "action": "execute",
+      "createdAt": "2026-03-12T11:09:57.005Z",
+      "updatedAt": "2026-03-12T11:09:57.045Z",
+      "request": {
+        "method": "POST",
+        "path": "/skills/bounty-executor/execute"
+      },
+      "input": {
+        "task": "wallet-activity"
+      },
+      "metadata": {
+        "requestedAsset": null,
+        "preferredAsset": null,
+        "requestedPaymentMethod": null
+      },
+      "network": "testnet",
+      "spendLimits": [
+        {
+          "asset": "USDCx",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 6,
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "acceptedProofHeaders": [
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "STX",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "native",
+          "decimals": 6,
+          "contractAddress": null,
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "sBTC",
+          "maxAmount": "800",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 8,
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid",
+            "x-yield-payment"
+          ]
+        }
+      ],
+      "verification": {
+        "inputDigest": "31adb77a199afa1529e15071c5547a7e76827dbaa0f1748bf3d22d6fffa274c4",
+        "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+        "intentDigest": "fbeb8ed929aabc1358098dc710b7d2fa7aeb5a3bd1c3d4ac7ad10abe4844b3c2"
+      },
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773313797005-7",
+        "attestationPath": "/registry/intents/intent-1773313797005-7/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773313797005-7",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        },
+        "mode": "api-attested",
+        "attestationMode": "express-registry-api"
+      }
+    }
+  },
+  {
+    "id": "intent-1773313800560-8",
+    "kind": "skill-execution",
+    "skillId": "bounty-executor",
+    "skillName": "Moltbot Bounty Executor",
+    "action": "execute",
+    "status": "completed",
+    "createdAt": "2026-03-12T11:10:00.560Z",
+    "updatedAt": "2026-03-12T11:10:04.473Z",
+    "request": {
+      "method": "POST",
+      "path": "/skills/bounty-executor/execute"
+    },
+    "input": {
+      "task": "wallet-activity",
+      "address": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"
+    },
+    "metadata": {
+      "requestedAsset": null,
+      "preferredAsset": null,
+      "requestedPaymentMethod": "yield-payment"
+    },
+    "verification": {
+      "inputDigest": "29f5dd505a5aefacf7b33f1bddbec9875fd93d197f02584bb2adc25434307cdc",
+      "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+      "intentDigest": "5d4a47763e3ccdc02177cdb3ca16bf5e1190fa8df07ac24ccc819a16387bc538",
+      "settlementDigest": "3cf5a147e2dcf43a35ff359b584bca4f43f4fd7bbba1fb854874078c1a55f729"
+    },
+    "settlement": {
+      "network": "testnet",
+      "options": [
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "USDCx",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "tokenType": "sip-010",
+          "decimals": 6
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "STX",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX"
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "800",
+          "asset": "sBTC",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "tokenType": "sip-010"
+        }
+      ],
+      "paymentRequestPath": "/skills/bounty-executor/execute",
+      "payment": {
+        "txid": "yield-payment-1773313800558",
+        "asset": "USDCx",
+        "amount": "8000",
+        "payer": "yield-engine",
+        "method": "yield-payment",
+        "verified": true,
+        "explorerUrl": null,
+        "yieldPowered": true,
+        "fundingSource": "yield",
+        "principalPreserved": true,
+        "proofStatus": "yield-helper",
+        "verificationDetails": {
+          "source": "stacking-dao-yield",
+          "principalPreserved": true,
+          "explorerReady": false
+        },
+        "quote": {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "USDCx",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "tokenType": "sip-010",
+          "decimals": 6
+        },
+        "settledAt": "2026-03-12T11:10:00.565Z"
+      }
+    },
+    "execution": {
+      "completedAt": "2026-03-12T11:10:04.473Z",
+      "ledgerEntryId": 3,
+      "paymentTxid": "yield-payment-1773313800558",
+      "resultDigest": "64a684e46ef0cfd026f4cda411a2f5ea61bfa0a70a9afd4a0329ed3e6963d58f",
+      "revenueDistributionDigest": "232ce1cdf5014f2d70cb9cb03300b39ca2d84d262f6eca8c42944a9be48a0bed"
+    },
+    "registry": {
+      "intentPath": "/registry/intents/intent-1773313800560-8",
+      "attestationPath": "/registry/intents/intent-1773313800560-8/attestation",
+      "settlementsPath": "/registry/settlements?intentId=intent-1773313800560-8",
+      "contract": {
+        "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+        "name": "verifiable-intent-registry",
+        "path": "contracts/verifiable-intent-registry.clar",
+        "network": "testnet",
+        "deploymentStatus": "deployed-testnet",
+        "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+        "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+      },
+      "mode": "api-attested",
+      "attestationMode": "express-registry-api",
+      "attestationStatus": "ready"
+    },
+    "attestation": {
+      "version": 1,
+      "type": "backend-intent-attestation",
+      "mode": "api-attested",
+      "helper": "express-registry-api",
+      "status": "ready",
+      "digest": "9e1c47d812c5a34b3d6b6f0104e388487655cf5800ce4a27739170d56691fc58",
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773313800560-8",
+        "attestationPath": "/registry/intents/intent-1773313800560-8/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773313800560-8",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        }
+      },
+      "notes": [
+        "Intent and attestation records are served by the Express registry API for the live hero flow.",
+        "Deployed Stacks testnet contract reference: ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry.",
+        "Verify the contract publication at https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet."
+      ],
+      "payload": {
+        "intentId": "intent-1773313800560-8",
+        "skillId": "bounty-executor",
+        "status": "completed",
+        "request": {
+          "method": "POST",
+          "path": "/skills/bounty-executor/execute"
+        },
+        "verification": {
+          "inputDigest": "29f5dd505a5aefacf7b33f1bddbec9875fd93d197f02584bb2adc25434307cdc",
+          "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+          "intentDigest": "5d4a47763e3ccdc02177cdb3ca16bf5e1190fa8df07ac24ccc819a16387bc538",
+          "settlementDigest": "3cf5a147e2dcf43a35ff359b584bca4f43f4fd7bbba1fb854874078c1a55f729"
+        },
+        "payment": {
+          "txid": "yield-payment-1773313800558",
+          "asset": "USDCx",
+          "amount": "8000",
+          "method": "yield-payment",
+          "fundingSource": "yield",
+          "principalPreserved": true,
+          "proofStatus": "yield-helper"
+        }
+      }
+    },
+    "verifiableIntent": {
+      "version": 1,
+      "type": "verifiable-intent",
+      "intentId": "intent-1773313800560-8",
+      "skillId": "bounty-executor",
+      "skillName": "Moltbot Bounty Executor",
+      "action": "execute",
+      "createdAt": "2026-03-12T11:10:00.560Z",
+      "updatedAt": "2026-03-12T11:10:04.473Z",
+      "request": {
+        "method": "POST",
+        "path": "/skills/bounty-executor/execute"
+      },
+      "input": {
+        "task": "wallet-activity",
+        "address": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"
+      },
+      "metadata": {
+        "requestedAsset": null,
+        "preferredAsset": null,
+        "requestedPaymentMethod": "yield-payment"
+      },
+      "network": "testnet",
+      "spendLimits": [
+        {
+          "asset": "USDCx",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 6,
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "acceptedProofHeaders": [
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "STX",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "native",
+          "decimals": 6,
+          "contractAddress": null,
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "sBTC",
+          "maxAmount": "800",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 8,
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid",
+            "x-yield-payment"
+          ]
+        }
+      ],
+      "verification": {
+        "inputDigest": "29f5dd505a5aefacf7b33f1bddbec9875fd93d197f02584bb2adc25434307cdc",
+        "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+        "intentDigest": "5d4a47763e3ccdc02177cdb3ca16bf5e1190fa8df07ac24ccc819a16387bc538",
+        "settlementDigest": "3cf5a147e2dcf43a35ff359b584bca4f43f4fd7bbba1fb854874078c1a55f729"
+      },
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773313800560-8",
+        "attestationPath": "/registry/intents/intent-1773313800560-8/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773313800560-8",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        },
+        "mode": "api-attested",
+        "attestationMode": "express-registry-api"
+      }
+    }
+  },
+  {
+    "id": "intent-1773313848832-9",
+    "kind": "skill-execution",
+    "skillId": "bounty-executor",
+    "skillName": "Moltbot Bounty Executor",
+    "action": "execute",
+    "status": "payment_required",
+    "createdAt": "2026-03-12T11:10:48.832Z",
+    "updatedAt": "2026-03-12T11:10:48.851Z",
+    "request": {
+      "method": "POST",
+      "path": "/skills/bounty-executor/execute"
+    },
+    "input": {
+      "task": "wallet activity",
+      "address": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"
+    },
+    "metadata": {
+      "requestedAsset": "USDCx",
+      "preferredAsset": null,
+      "requestedPaymentMethod": null
+    },
+    "verification": {
+      "inputDigest": "720dff637a75bbb376e47778fa7c300d0b67fce7679a769e1ecaac9b9288fead",
+      "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+      "intentDigest": "babb019b807c0c1681912c7a171e430d859a0e8ed224f3ab244d493729e2af7e"
+    },
+    "settlement": {
+      "network": "testnet",
+      "options": [
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "USDCx",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "tokenType": "sip-010",
+          "decimals": 6
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "STX",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX"
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "800",
+          "asset": "sBTC",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "tokenType": "sip-010"
+        }
+      ],
+      "paymentRequestPath": "/skills/bounty-executor/execute",
+      "payment": null
+    },
+    "execution": null,
+    "registry": {
+      "intentPath": "/registry/intents/intent-1773313848832-9",
+      "attestationPath": "/registry/intents/intent-1773313848832-9/attestation",
+      "settlementsPath": "/registry/settlements?intentId=intent-1773313848832-9",
+      "contract": {
+        "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+        "name": "verifiable-intent-registry",
+        "path": "contracts/verifiable-intent-registry.clar",
+        "network": "testnet",
+        "deploymentStatus": "deployed-testnet",
+        "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+        "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+      },
+      "mode": "api-attested",
+      "attestationMode": "express-registry-api",
+      "attestationStatus": "pending-payment"
+    },
+    "attestation": {
+      "version": 1,
+      "type": "backend-intent-attestation",
+      "mode": "api-attested",
+      "helper": "express-registry-api",
+      "status": "pending-payment",
+      "digest": "2575bc99b2f14e63f35e2b2251534c98b0ce03db6c9fc8e4868eeea1fee36c63",
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773313848832-9",
+        "attestationPath": "/registry/intents/intent-1773313848832-9/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773313848832-9",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        }
+      },
+      "notes": [
+        "Intent and attestation records are served by the Express registry API for the live hero flow.",
+        "Deployed Stacks testnet contract reference: ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry.",
+        "Verify the contract publication at https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet."
+      ],
+      "payload": {
+        "intentId": "intent-1773313848832-9",
+        "skillId": "bounty-executor",
+        "status": "payment_required",
+        "request": {
+          "method": "POST",
+          "path": "/skills/bounty-executor/execute"
+        },
+        "verification": {
+          "inputDigest": "720dff637a75bbb376e47778fa7c300d0b67fce7679a769e1ecaac9b9288fead",
+          "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+          "intentDigest": "babb019b807c0c1681912c7a171e430d859a0e8ed224f3ab244d493729e2af7e"
+        },
+        "payment": null
+      }
+    },
+    "verifiableIntent": {
+      "version": 1,
+      "type": "verifiable-intent",
+      "intentId": "intent-1773313848832-9",
+      "skillId": "bounty-executor",
+      "skillName": "Moltbot Bounty Executor",
+      "action": "execute",
+      "createdAt": "2026-03-12T11:10:48.832Z",
+      "updatedAt": "2026-03-12T11:10:48.851Z",
+      "request": {
+        "method": "POST",
+        "path": "/skills/bounty-executor/execute"
+      },
+      "input": {
+        "task": "wallet activity",
+        "address": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"
+      },
+      "metadata": {
+        "requestedAsset": "USDCx",
+        "preferredAsset": null,
+        "requestedPaymentMethod": null
+      },
+      "network": "testnet",
+      "spendLimits": [
+        {
+          "asset": "USDCx",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 6,
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "acceptedProofHeaders": [
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "STX",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "native",
+          "decimals": 6,
+          "contractAddress": null,
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "sBTC",
+          "maxAmount": "800",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 8,
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid",
+            "x-yield-payment"
+          ]
+        }
+      ],
+      "verification": {
+        "inputDigest": "720dff637a75bbb376e47778fa7c300d0b67fce7679a769e1ecaac9b9288fead",
+        "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+        "intentDigest": "babb019b807c0c1681912c7a171e430d859a0e8ed224f3ab244d493729e2af7e"
+      },
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773313848832-9",
+        "attestationPath": "/registry/intents/intent-1773313848832-9/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773313848832-9",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        },
+        "mode": "api-attested",
+        "attestationMode": "express-registry-api"
+      }
+    }
+  },
+  {
+    "id": "intent-1773314144463-10",
+    "kind": "skill-execution",
+    "skillId": "bounty-executor",
+    "skillName": "Moltbot Bounty Executor",
+    "action": "execute",
+    "status": "payment_required",
+    "createdAt": "2026-03-12T11:15:44.463Z",
+    "updatedAt": "2026-03-12T11:15:44.489Z",
+    "request": {
+      "method": "POST",
+      "path": "/skills/bounty-executor/execute"
+    },
+    "input": {
+      "task": "wallet-activity"
+    },
+    "metadata": {
+      "requestedAsset": null,
+      "preferredAsset": null,
+      "requestedPaymentMethod": null
+    },
+    "verification": {
+      "inputDigest": "31adb77a199afa1529e15071c5547a7e76827dbaa0f1748bf3d22d6fffa274c4",
+      "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+      "intentDigest": "fbeb8ed929aabc1358098dc710b7d2fa7aeb5a3bd1c3d4ac7ad10abe4844b3c2"
+    },
+    "settlement": {
+      "network": "testnet",
+      "options": [
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "USDCx",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "tokenType": "sip-010",
+          "decimals": 6
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "STX",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX"
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "800",
+          "asset": "sBTC",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "tokenType": "sip-010"
+        }
+      ],
+      "paymentRequestPath": "/skills/bounty-executor/execute",
+      "payment": null
+    },
+    "execution": null,
+    "registry": {
+      "intentPath": "/registry/intents/intent-1773314144463-10",
+      "attestationPath": "/registry/intents/intent-1773314144463-10/attestation",
+      "settlementsPath": "/registry/settlements?intentId=intent-1773314144463-10",
+      "contract": {
+        "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+        "name": "verifiable-intent-registry",
+        "path": "contracts/verifiable-intent-registry.clar",
+        "network": "testnet",
+        "deploymentStatus": "deployed-testnet",
+        "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+        "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+      },
+      "mode": "api-attested",
+      "attestationMode": "express-registry-api",
+      "attestationStatus": "pending-payment"
+    },
+    "attestation": {
+      "version": 1,
+      "type": "backend-intent-attestation",
+      "mode": "api-attested",
+      "helper": "express-registry-api",
+      "status": "pending-payment",
+      "digest": "6b9e76a49c7f2e0c116f2a01f6203bdc6fc0ebd09daf6d4c28d56aa745dd2d95",
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773314144463-10",
+        "attestationPath": "/registry/intents/intent-1773314144463-10/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773314144463-10",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        }
+      },
+      "notes": [
+        "Intent and attestation records are served by the Express registry API for the live hero flow.",
+        "Deployed Stacks testnet contract reference: ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry.",
+        "Verify the contract publication at https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet."
+      ],
+      "payload": {
+        "intentId": "intent-1773314144463-10",
+        "skillId": "bounty-executor",
+        "status": "payment_required",
+        "request": {
+          "method": "POST",
+          "path": "/skills/bounty-executor/execute"
+        },
+        "verification": {
+          "inputDigest": "31adb77a199afa1529e15071c5547a7e76827dbaa0f1748bf3d22d6fffa274c4",
+          "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+          "intentDigest": "fbeb8ed929aabc1358098dc710b7d2fa7aeb5a3bd1c3d4ac7ad10abe4844b3c2"
+        },
+        "payment": null
+      }
+    },
+    "verifiableIntent": {
+      "version": 1,
+      "type": "verifiable-intent",
+      "intentId": "intent-1773314144463-10",
+      "skillId": "bounty-executor",
+      "skillName": "Moltbot Bounty Executor",
+      "action": "execute",
+      "createdAt": "2026-03-12T11:15:44.463Z",
+      "updatedAt": "2026-03-12T11:15:44.489Z",
+      "request": {
+        "method": "POST",
+        "path": "/skills/bounty-executor/execute"
+      },
+      "input": {
+        "task": "wallet-activity"
+      },
+      "metadata": {
+        "requestedAsset": null,
+        "preferredAsset": null,
+        "requestedPaymentMethod": null
+      },
+      "network": "testnet",
+      "spendLimits": [
+        {
+          "asset": "USDCx",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 6,
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "acceptedProofHeaders": [
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "STX",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "native",
+          "decimals": 6,
+          "contractAddress": null,
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "sBTC",
+          "maxAmount": "800",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 8,
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid",
+            "x-yield-payment"
+          ]
+        }
+      ],
+      "verification": {
+        "inputDigest": "31adb77a199afa1529e15071c5547a7e76827dbaa0f1748bf3d22d6fffa274c4",
+        "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+        "intentDigest": "fbeb8ed929aabc1358098dc710b7d2fa7aeb5a3bd1c3d4ac7ad10abe4844b3c2"
+      },
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773314144463-10",
+        "attestationPath": "/registry/intents/intent-1773314144463-10/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773314144463-10",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        },
+        "mode": "api-attested",
+        "attestationMode": "express-registry-api"
+      }
+    }
+  },
+  {
+    "id": "intent-1773314147898-11",
+    "kind": "skill-execution",
+    "skillId": "bounty-executor",
+    "skillName": "Moltbot Bounty Executor",
+    "action": "execute",
+    "status": "completed",
+    "createdAt": "2026-03-12T11:15:47.898Z",
+    "updatedAt": "2026-03-12T11:15:50.256Z",
+    "request": {
+      "method": "POST",
+      "path": "/skills/bounty-executor/execute"
+    },
+    "input": {
+      "task": "wallet-activity",
+      "address": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"
+    },
+    "metadata": {
+      "requestedAsset": null,
+      "preferredAsset": null,
+      "requestedPaymentMethod": "yield-payment"
+    },
+    "verification": {
+      "inputDigest": "29f5dd505a5aefacf7b33f1bddbec9875fd93d197f02584bb2adc25434307cdc",
+      "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+      "intentDigest": "5d4a47763e3ccdc02177cdb3ca16bf5e1190fa8df07ac24ccc819a16387bc538",
+      "settlementDigest": "9603b6407693b37a4badd78fa3e104140ec6e75caa96d159304b39205e10db53"
+    },
+    "settlement": {
+      "network": "testnet",
+      "options": [
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "USDCx",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "tokenType": "sip-010",
+          "decimals": 6
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "STX",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX"
+        },
+        {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "800",
+          "asset": "sBTC",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "tokenType": "sip-010"
+        }
+      ],
+      "paymentRequestPath": "/skills/bounty-executor/execute",
+      "payment": {
+        "txid": "yield-payment-1773314147896",
+        "asset": "USDCx",
+        "amount": "8000",
+        "payer": "yield-engine",
+        "method": "yield-payment",
+        "verified": true,
+        "explorerUrl": null,
+        "yieldPowered": true,
+        "fundingSource": "yield",
+        "principalPreserved": true,
+        "proofStatus": "yield-helper",
+        "verificationDetails": {
+          "source": "stacking-dao-yield",
+          "principalPreserved": true,
+          "explorerReady": false
+        },
+        "quote": {
+          "scheme": "exact",
+          "network": "stacks:2147483648",
+          "amount": "8000",
+          "asset": "USDCx",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "tokenType": "sip-010",
+          "decimals": 6
+        },
+        "settledAt": "2026-03-12T11:15:47.907Z"
+      }
+    },
+    "execution": {
+      "completedAt": "2026-03-12T11:15:50.255Z",
+      "ledgerEntryId": 4,
+      "paymentTxid": "yield-payment-1773314147896",
+      "resultDigest": "cbeb2d3605b0ef0e00cd21b33b7e1e188eda178fedf8289f42be7e768c9e1bce",
+      "revenueDistributionDigest": "c571b1987aa6f51ec92d962a951f80c5a5f20d28649498ed5e91d03f6cadccaa"
+    },
+    "registry": {
+      "intentPath": "/registry/intents/intent-1773314147898-11",
+      "attestationPath": "/registry/intents/intent-1773314147898-11/attestation",
+      "settlementsPath": "/registry/settlements?intentId=intent-1773314147898-11",
+      "contract": {
+        "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+        "name": "verifiable-intent-registry",
+        "path": "contracts/verifiable-intent-registry.clar",
+        "network": "testnet",
+        "deploymentStatus": "deployed-testnet",
+        "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+        "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+      },
+      "mode": "api-attested",
+      "attestationMode": "express-registry-api",
+      "attestationStatus": "ready"
+    },
+    "attestation": {
+      "version": 1,
+      "type": "backend-intent-attestation",
+      "mode": "api-attested",
+      "helper": "express-registry-api",
+      "status": "ready",
+      "digest": "c6573c93d674d4c3f7b972ded0636171b6361a152b96a3d6110cc7d5eadce7be",
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773314147898-11",
+        "attestationPath": "/registry/intents/intent-1773314147898-11/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773314147898-11",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        }
+      },
+      "notes": [
+        "Intent and attestation records are served by the Express registry API for the live hero flow.",
+        "Deployed Stacks testnet contract reference: ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry.",
+        "Verify the contract publication at https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet."
+      ],
+      "payload": {
+        "intentId": "intent-1773314147898-11",
+        "skillId": "bounty-executor",
+        "status": "completed",
+        "request": {
+          "method": "POST",
+          "path": "/skills/bounty-executor/execute"
+        },
+        "verification": {
+          "inputDigest": "29f5dd505a5aefacf7b33f1bddbec9875fd93d197f02584bb2adc25434307cdc",
+          "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+          "intentDigest": "5d4a47763e3ccdc02177cdb3ca16bf5e1190fa8df07ac24ccc819a16387bc538",
+          "settlementDigest": "9603b6407693b37a4badd78fa3e104140ec6e75caa96d159304b39205e10db53"
+        },
+        "payment": {
+          "txid": "yield-payment-1773314147896",
+          "asset": "USDCx",
+          "amount": "8000",
+          "method": "yield-payment",
+          "fundingSource": "yield",
+          "principalPreserved": true,
+          "proofStatus": "yield-helper"
+        }
+      }
+    },
+    "verifiableIntent": {
+      "version": 1,
+      "type": "verifiable-intent",
+      "intentId": "intent-1773314147898-11",
+      "skillId": "bounty-executor",
+      "skillName": "Moltbot Bounty Executor",
+      "action": "execute",
+      "createdAt": "2026-03-12T11:15:47.898Z",
+      "updatedAt": "2026-03-12T11:15:50.256Z",
+      "request": {
+        "method": "POST",
+        "path": "/skills/bounty-executor/execute"
+      },
+      "input": {
+        "task": "wallet-activity",
+        "address": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"
+      },
+      "metadata": {
+        "requestedAsset": null,
+        "preferredAsset": null,
+        "requestedPaymentMethod": "yield-payment"
+      },
+      "network": "testnet",
+      "spendLimits": [
+        {
+          "asset": "USDCx",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 6,
+          "contractAddress": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 USDCx",
+          "acceptedProofHeaders": [
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "STX",
+          "maxAmount": "8000",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "native",
+          "decimals": 6,
+          "contractAddress": null,
+          "maxTimeoutSeconds": 300,
+          "display": "0.008 STX",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid"
+          ]
+        },
+        {
+          "asset": "sBTC",
+          "maxAmount": "800",
+          "payTo": "ST8VWCW6NG4Q2Q41JMRQ0G22JVTBV5FQEHF2YD10",
+          "network": "stacks:2147483648",
+          "tokenType": "sip-010",
+          "decimals": 8,
+          "contractAddress": "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token",
+          "maxTimeoutSeconds": 300,
+          "display": "800 sats",
+          "acceptedProofHeaders": [
+            "payment-signature",
+            "x-payment-txid",
+            "x-yield-payment"
+          ]
+        }
+      ],
+      "verification": {
+        "inputDigest": "29f5dd505a5aefacf7b33f1bddbec9875fd93d197f02584bb2adc25434307cdc",
+        "quoteDigest": "aa872dd0621407c8ecf441bf69b5905f7c2ee2533b5c135d9922e84301ded491",
+        "intentDigest": "5d4a47763e3ccdc02177cdb3ca16bf5e1190fa8df07ac24ccc819a16387bc538",
+        "settlementDigest": "9603b6407693b37a4badd78fa3e104140ec6e75caa96d159304b39205e10db53"
+      },
+      "registry": {
+        "intentPath": "/registry/intents/intent-1773314147898-11",
+        "attestationPath": "/registry/intents/intent-1773314147898-11/attestation",
+        "settlementsPath": "/registry/settlements?intentId=intent-1773314147898-11",
+        "contract": {
+          "identifier": "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry",
+          "name": "verifiable-intent-registry",
+          "path": "contracts/verifiable-intent-registry.clar",
+          "network": "testnet",
+          "deploymentStatus": "deployed-testnet",
+          "deploymentTxid": "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2",
+          "deploymentExplorerUrl": "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet"
+        },
+        "mode": "api-attested",
+        "attestationMode": "express-registry-api"
+      }
+    }
+  }
+]

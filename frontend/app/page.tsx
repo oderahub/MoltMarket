@@ -367,7 +367,7 @@ export default function BloombergTerminal() {
                   <div className="mb-1 flex items-center gap-2 text-[9px] uppercase tracking-[0.16em] text-white/35">
                     <ShieldCheck size={11} className="text-stacks" /> Proof loop
                   </div>
-                  <p>Keep the terminal watching for tool progress, verifiable intent payloads, and Hiro explorer links after each on-chain step.</p>
+                  <p>Keep the terminal watching for API intent records, the deployed testnet registry contract reference, and Hiro explorer links after each on-chain step.</p>
                 </div>
               </div>
             </div>
@@ -480,7 +480,7 @@ export default function BloombergTerminal() {
           <span>HIGH-VALUE BOUNTIES SETTLE ON THE USDCx RAIL</span>
           <span>HIRO API LATENCY: 142MS</span>
           <span>x402-STACKS PROTOCOL ACTIVE</span>
-          <span>VERIFIABLE INTENT + EXPLORER LINKS REQUIRED FOR HERO FLOW</span>
+          <span>DEPLOYED TESTNET REGISTRY + EXPLORER LINKS REQUIRED FOR HERO FLOW</span>
         </div>
       </footer>
     </div>
