@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
+    "clarinet:check": "clarinet check -m Clarinet.toml -p deployments/default.simnet-plan.yaml",
     "client:discover": "node scripts/client-discover.js",
     "client:pay": "node scripts/client-pay-for-skill.js",
     "client:demo": "node scripts/demo-full-flow.js",

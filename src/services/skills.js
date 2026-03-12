@@ -300,18 +300,18 @@ const SKILLS = [
       "'Compare two wallets', 'Find the most active address in recent blocks', " +
       "'Check if address X is stacking'. " +
       "Implements Tony's vision: x402-funded bot bounties where agents hire agents. " +
-      "Pay in STX or sBTC (Bitcoin on Stacks).",
+      "High-value execution defaults to USDCx settlement, with STX and sBTC still available.",
     category: "bounty-orchestration",
     price: "8000", // 8000 microSTX = 0.008 STX
     asset: "STX",
     // Multi-asset pricing: agents can pay in STX, sBTC, or USDCx
     acceptedAssets: [
+      { asset: "USDCx", amount: "8000", display: "0.008 USDCx" },
       { asset: "STX", amount: "8000", display: "0.008 STX" },
       { asset: "sBTC", amount: "800", display: "800 sats" },
-      { asset: "USDCx", amount: "8000", display: "0.008 USDCx" },
     ],
     preview:
-      "Free preview: Submit any on-chain query as a bounty. Pay in STX or sBTC. " +
+      "Free preview: Submit any on-chain query as a bounty. USDCx is the default payout rail, with STX or sBTC also accepted. " +
       "This skill orchestrates multiple Hiro API calls to fulfill your request. " +
       "Supported: wallet comparison, activity analysis, stacking checks.",
     providers: [

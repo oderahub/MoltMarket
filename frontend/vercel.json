@@ -4,8 +4,36 @@
   "framework": "nextjs",
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "https://moltmarket-api.onrender.com/:path*"
+      "source": "/skills/:path*",
+      "destination": "https://moltmarket-api.onrender.com/skills/:path*"
+    },
+    {
+      "source": "/bounties/:path*",
+      "destination": "https://moltmarket-api.onrender.com/bounties/:path*"
+    },
+    {
+      "source": "/ledger/:path*",
+      "destination": "https://moltmarket-api.onrender.com/ledger/:path*"
+    },
+    {
+      "source": "/registry/:path*",
+      "destination": "https://moltmarket-api.onrender.com/registry/:path*"
+    },
+    {
+      "source": "/treasury/:path*",
+      "destination": "https://moltmarket-api.onrender.com/treasury/:path*"
+    },
+    {
+      "source": "/trust/:path*",
+      "destination": "https://moltmarket-api.onrender.com/trust/:path*"
+    },
+    {
+      "source": "/demo/:path*",
+      "destination": "https://moltmarket-api.onrender.com/demo/:path*"
+    },
+    {
+      "source": "/health",
+      "destination": "https://moltmarket-api.onrender.com/health"
     }
   ]
 }

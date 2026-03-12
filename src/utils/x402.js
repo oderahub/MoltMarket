@@ -32,6 +32,116 @@ export const PAYMENT_HEADER = "payment-signature";
  */
 export const PAYMENT_RESPONSE_HEADER = "payment-response";
 
+export function getStacksNetworkId() {
+  return config.stacksNetwork === "mainnet" ? "stacks:1" : "stacks:2147483648";
+}
+
+export function getExplorerTxUrl(txid, network = config.stacksNetwork) {
+  if (!txid) return null;
+  const chain = network === "mainnet" ? "mainnet" : "testnet";
+  return `https://explorer.hiro.so/txid/${txid}?chain=${chain}`;
+}
+
+function getAssetMetadata(asset) {
+  if (asset === "sBTC") {
+    return {
+      contractAddress: config.sbtcContract,
+      tokenType: "sip-010",
+    };
+  }
+
+  if (asset === "USDCx") {
+    return {
+      contractAddress: config.usdcxContract,
+      tokenType: "sip-010",
+      decimals: 6,
+    };
+  }
+
+  return {};
+}
+
+export function normalizeAcceptedAssets({
+  payTo = "",
+  amount,
+  asset = "STX",
+  acceptedAssets = null,
+  maxTimeoutSeconds = 300,
+}) {
+  const options = acceptedAssets && acceptedAssets.length > 0
+    ? acceptedAssets
+    : [{ asset, amount }];
+
+  return options.map((opt) => ({
+    scheme: "exact",
+    network: getStacksNetworkId(),
+    amount: String(opt.amount),
+    asset: opt.asset,
+    ...(payTo ? { payTo } : {}),
+    maxTimeoutSeconds,
+    ...(opt.display ? { display: opt.display } : {}),
+    ...getAssetMetadata(opt.asset),
+  }));
+}
+
+export function resolveSettlementQuote({
+  requestedAsset = null,
+  amount,
+  asset = "STX",
+  acceptedAssets = null,
+}) {
+  const options = normalizeAcceptedAssets({ amount, asset, acceptedAssets });
+  if (!requestedAsset) return options[0];
+
+  return (
+    options.find(
+      (option) => option.asset.toLowerCase() === String(requestedAsset).toLowerCase()
+    ) || options[0]
+  );
+}
+
+export function resolvePaymentProofStatus(payment = {}) {
+  if (payment.proofStatus) return payment.proofStatus;
+  if (payment.method === "yield-payment") return "yield-helper";
+  return payment.verified === false ? "pending-onchain" : "verified-onchain";
+}
+
+export function isExecutionUnlockedPayment(payment = {}) {
+  if (!payment || typeof payment !== "object") return false;
+
+  const proofStatus = resolvePaymentProofStatus(payment);
+  if (proofStatus === "yield-helper") {
+    return payment.verified !== false;
+  }
+
+  return payment.verified === true && proofStatus === "verified-onchain";
+}
+
+export function getPaymentFailureReason(payment = {}) {
+  const proofStatus = resolvePaymentProofStatus(payment);
+
+  switch (proofStatus) {
+    case "tx-found-asset-unconfirmed":
+      return "Payment proof does not match the selected settlement asset or contract.";
+    case "pending-onchain":
+      return "Payment proof is still pending or was not found on-chain.";
+    case "verification-unavailable":
+      return "Payment proof could not be verified on-chain.";
+    case "tx-status-not-success":
+      return "Payment transaction was found on-chain but did not settle successfully.";
+    case "yield-helper":
+      return payment.verified === false
+        ? "Yield-powered payment proof is not valid for execution."
+        : "";
+    case "verified-onchain":
+      return payment.verified === true
+        ? ""
+        : "Payment proof is not valid for the selected settlement.";
+    default:
+      return "Payment proof is not valid for the selected settlement.";
+  }
+}
+
 /**
  * Builds the JSON body for an HTTP 402 Payment Required response.
  *
@@ -67,34 +177,13 @@ export function buildPaymentRequired({
   acceptedAssets = null,
   maxTimeoutSeconds = 300,
 }) {
-  // Build accepts array — either from acceptedAssets or single asset
-  let accepts;
-  if (acceptedAssets && acceptedAssets.length > 0) {
-    accepts = acceptedAssets.map((opt) => ({
-      scheme: "exact",
-      network: "stacks:1",
-      amount: String(opt.amount),
-      asset: opt.asset,
-      payTo,
-      maxTimeoutSeconds,
-      // Include sBTC contract info for SIP-010 tokens
-      ...(opt.asset === "sBTC" && {
-        contractAddress: config.sbtcContract,
-        tokenType: "sip-010",
-      }),
-    }));
-  } else {
-    accepts = [
-      {
-        scheme: "exact",
-        network: "stacks:1",
-        amount: String(amount),
-        asset,
-        payTo,
-        maxTimeoutSeconds,
-      },
-    ];
-  }
+  const accepts = normalizeAcceptedAssets({
+    payTo,
+    amount,
+    asset,
+    acceptedAssets,
+    maxTimeoutSeconds,
+  });
 
   return {
     x402Version: 2,
@@ -158,7 +247,7 @@ export function buildPaymentPayload({ transactionHex }) {
   return {
     x402Version: 2,
     scheme: "exact",
-    network: "stacks:1",
+    network: getStacksNetworkId(),
     payload: {
       transaction: transactionHex,
     },
@@ -178,14 +267,20 @@ export function buildPaymentPayload({ transactionHex }) {
 export function buildPaymentResponse({
   success,
   txid = "",
-  network = "stacks:1",
+  network = getStacksNetworkId(),
   errorReason = "",
+  asset = "",
+  intentId = "",
+  settlementDigest = "",
 }) {
   const responseObj = {
     success,
     txid,
     network,
   };
+  if (asset) responseObj.asset = asset;
+  if (intentId) responseObj.intentId = intentId;
+  if (settlementDigest) responseObj.settlementDigest = settlementDigest;
   if (!success && errorReason) {
     responseObj.errorReason = errorReason;
   }

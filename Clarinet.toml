@@ -1,0 +1,23 @@
+[project]
+name = 'moltmarket'
+description = 'Minimal Clarinet scaffold for the verifiable intent registry contract.'
+authors = []
+telemetry = false
+cache_dir = './.cache'
+requirements = []
+
+[contracts.verifiable-intent-registry]
+path = 'contracts/verifiable-intent-registry.clar'
+clarity_version = 4
+epoch = 'latest'
+
+[repl.analysis]
+passes = ['check_checker']
+
+[repl.analysis.lints]
+
+[repl.analysis.check_checker]
+strict = false
+trusted_sender = false
+trusted_caller = false
+callee_filter = false

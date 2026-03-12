@@ -17,6 +17,15 @@ import {
 } from "x402-stacks";
 import config from "../config.js";
 import log from "../utils/logger.js";
+import {
+  buildPaymentRequired,
+  buildPaymentResponse,
+  getPaymentFailureReason,
+  getExplorerTxUrl,
+  isExecutionUnlockedPayment,
+  resolveSettlementQuote,
+  PAYMENT_RESPONSE_HEADER,
+} from "../utils/x402.js";
 
 // Default facilitator URL from x402-stacks
 const DEFAULT_FACILITATOR = "https://x402-backend-7eby.onrender.com";
@@ -32,46 +41,110 @@ const DEFAULT_FACILITATOR = "https://x402-backend-7eby.onrender.com";
  * @param {Array} [options.acceptedAssets] - Multi-asset pricing options
  * @returns {Function} Express middleware function
  */
-export function paymentGate({ price, description = "", asset = "STX", acceptedAssets = null }) {
-  // Build middleware config for x402-stacks
-  const middlewareConfig = {
-    amount: BigInt(price),
-    address: config.platformAddress,
-    network: config.stacksNetwork,
-    facilitatorUrl: config.facilitatorUrl || DEFAULT_FACILITATOR,
-    description,
-    tokenType: asset === "sBTC" ? "sBTC" : "STX",
+function readHeader(req, name) {
+  const value = req.headers[name];
+  return typeof value === "string" ? value : null;
+}
+
+function buildRejectedDirectTxidPayment({
+  txid,
+  selectedSettlement,
+  payer,
+  proofStatus,
+  verificationDetails,
+}) {
+  return {
+    txid,
+    amount: selectedSettlement.amount,
+    asset: selectedSettlement.asset,
+    payer,
+    explorerUrl: getExplorerTxUrl(txid),
+    method: "direct-txid",
+    verified: false,
+    fundingSource: "principal",
+    principalPreserved: false,
+    proofStatus,
+    verificationDetails,
+    quote: selectedSettlement,
   };
+}
 
-  // Add sBTC contract if needed
-  if (asset === "sBTC") {
-    middlewareConfig.tokenContract = getDefaultSBTCContract(config.stacksNetwork);
-  }
+function rejectInvalidDirectTxidProof(req, res, options) {
+  const { price, description, asset, acceptedAssets, intentId, selectedSettlement, payment } = options;
+  const errorReason = getPaymentFailureReason(payment);
 
-  // Create base x402-stacks middleware
-  const baseMiddleware = paymentMiddleware(middlewareConfig);
+  log.warn("x402", `${errorReason} txid: ${payment.txid}`);
+  res.set(
+    PAYMENT_RESPONSE_HEADER,
+    buildPaymentResponse({
+      success: false,
+      txid: payment.txid,
+      asset: selectedSettlement.asset,
+      intentId: intentId || "",
+      errorReason,
+    })
+  );
 
+  return handlePaymentRequired(req, res, {
+    price,
+    description,
+    asset,
+    acceptedAssets,
+    intentId,
+    selectedSettlement,
+    paymentFailure: {
+      ...payment,
+      error: errorReason,
+    },
+  });
+}
+
+export function paymentGate({
+  price,
+  description = "",
+  asset = "STX",
+  acceptedAssets = null,
+  intentId = null,
+}) {
   // Wrap with MoltMarket extensions (logging, multi-asset, direct txid)
   return async (req, res, next) => {
+    const selectedSettlement = resolveSettlementQuote({
+      requestedAsset: readHeader(req, "x-payment-asset"),
+      amount: price,
+      asset,
+      acceptedAssets,
+    });
+
     // Check for YIELD PAYMENT (StackingDAO yield-powered)
-    const yieldPayment = req.headers["x-yield-payment"];
+    const yieldPayment = readHeader(req, "x-yield-payment");
     if (yieldPayment) {
       log.success("x402", `[YIELD_ENGINE] Yield payment accepted: ${yieldPayment}`);
 
       // Attach payment info for yield payment
       req.x402 = {
         txid: yieldPayment,
-        amount: price,
-        asset: "sBTC-yield",
+        amount: selectedSettlement.amount,
+        asset: selectedSettlement.asset,
         payer: "yield-engine",
         explorerUrl: null,
         yieldPowered: true,
+        fundingSource: "yield",
+        principalPreserved: true,
+        method: "yield-payment",
+        verified: true,
+        proofStatus: "yield-helper",
+        verificationDetails: {
+          source: "stacking-dao-yield",
+          principalPreserved: true,
+          explorerReady: false,
+        },
+        quote: selectedSettlement,
       };
       return next();
     }
 
     // Check for DIRECT TXID proof 
-    const directTxid = req.headers["x-payment-txid"];
+    const directTxid = readHeader(req, "x-payment-txid");
     if (directTxid) {
       log.info("x402", `Direct txid proof received: ${directTxid}`);
 
@@ -82,54 +155,151 @@ export function paymentGate({ price, description = "", asset = "STX", acceptedAs
 
         if (verifyRes.ok) {
           const txData = await verifyRes.json();
-          log.success("x402", `Payment verified on-chain! Status: ${txData.tx_status}`);
+          const expectedContract = selectedSettlement.contractAddress || null;
+          const observedContract = txData.contract_call?.contract_id || null;
+          const assetMatchConfirmed = expectedContract
+            ? observedContract === expectedContract
+            : txData.tx_type === "token_transfer";
+          const txStatusConfirmed = txData.tx_status === "success";
 
-          // Attach payment info
-          req.x402 = {
-            txid: directTxid,
-            amount: price,
-            asset: asset,
-            payer: txData.sender_address || "unknown",
-            explorerUrl: `https://explorer.hiro.so/txid/${directTxid}?chain=${config.stacksNetwork}`,
-          };
+          const payment = txStatusConfirmed && assetMatchConfirmed
+            ? {
+                txid: directTxid,
+                amount: selectedSettlement.amount,
+                asset: selectedSettlement.asset,
+                payer: txData.sender_address || "unknown",
+                explorerUrl: getExplorerTxUrl(directTxid),
+                method: "direct-txid",
+                verified: true,
+                fundingSource: "principal",
+                principalPreserved: false,
+                proofStatus: "verified-onchain",
+                verificationDetails: {
+                  txStatus: txData.tx_status,
+                  txType: txData.tx_type,
+                  expectedContract,
+                  observedContract,
+                  assetMatchConfirmed,
+                  txStatusConfirmed,
+                },
+                quote: selectedSettlement,
+              }
+            : buildRejectedDirectTxidPayment({
+                txid: directTxid,
+                selectedSettlement,
+                payer: txData.sender_address || "unknown",
+                proofStatus: assetMatchConfirmed
+                  ? "tx-status-not-success"
+                  : "tx-found-asset-unconfirmed",
+                verificationDetails: {
+                  txStatus: txData.tx_status,
+                  txType: txData.tx_type,
+                  expectedContract,
+                  observedContract,
+                  assetMatchConfirmed,
+                  txStatusConfirmed,
+                },
+              });
+
+          if (!isExecutionUnlockedPayment(payment)) {
+            return rejectInvalidDirectTxidProof(req, res, {
+              price,
+              description,
+              asset,
+              acceptedAssets,
+              intentId,
+              selectedSettlement,
+              payment,
+            });
+          }
+
+          log.success("x402", `Payment verified on-chain! Status: ${txData.tx_status}`);
+          req.x402 = payment;
           return next();
         } else {
-          log.warn("x402", `Txid ${directTxid} not found yet (may be pending). Accepting anyway.`);
-          req.x402 = {
-            txid: directTxid,
-            amount: price,
-            asset: asset,
-            payer: "pending",
-            explorerUrl: `https://explorer.hiro.so/txid/${directTxid}?chain=${config.stacksNetwork}`,
-          };
-          return next();
+          return rejectInvalidDirectTxidProof(req, res, {
+            price,
+            description,
+            asset,
+            acceptedAssets,
+            intentId,
+            selectedSettlement,
+            payment: buildRejectedDirectTxidPayment({
+              txid: directTxid,
+              selectedSettlement,
+              payer: "pending",
+              proofStatus: "pending-onchain",
+              verificationDetails: {
+                txStatus: "pending-or-not-found",
+                expectedContract: selectedSettlement.contractAddress || null,
+                httpStatus: verifyRes.status,
+              },
+            }),
+          });
         }
       } catch (err) {
-        log.warn("x402", `Could not verify txid: ${err.message}. Accepting anyway.`);
-        req.x402 = {
-          txid: directTxid,
-          amount: price,
-          asset: asset,
-          payer: "unverified",
-          explorerUrl: `https://explorer.hiro.so/txid/${directTxid}?chain=${config.stacksNetwork}`,
-        };
-        return next();
+        return rejectInvalidDirectTxidProof(req, res, {
+          price,
+          description,
+          asset,
+          acceptedAssets,
+          intentId,
+          selectedSettlement,
+          payment: buildRejectedDirectTxidPayment({
+            txid: directTxid,
+            selectedSettlement,
+            payer: "unverified",
+            proofStatus: "verification-unavailable",
+            verificationDetails: {
+              error: err.message,
+              expectedContract: selectedSettlement.contractAddress || null,
+            },
+          }),
+        });
       }
     }
 
     // Check if payment header exists for logging
-    const hasPayment = req.headers["payment-signature"];
+    const hasPayment = readHeader(req, "payment-signature");
 
     if (!hasPayment) {
       log.info("x402", `No payment header on ${req.method} ${req.path}. Returning 402.`);
+      if (intentId) res.set("x-intent-id", intentId);
 
-      // If multi-asset, we need to handle the 402 response ourselves
-      if (acceptedAssets && acceptedAssets.length > 1) {
-        return handleMultiAsset402(req, res, { price, description, acceptedAssets });
-      }
+      return handlePaymentRequired(req, res, {
+        price,
+        description,
+        asset,
+        acceptedAssets,
+        intentId,
+        selectedSettlement,
+      });
     } else {
       log.info("x402", `Payment header received on ${req.method} ${req.path}. Verifying...`);
     }
+
+    if (selectedSettlement.asset === "USDCx") {
+      return res.status(400).json({
+        error: "USDCx settlement currently expects x-payment-txid proof rather than payment-signature verification.",
+        acceptedProofHeaders: ["x-payment-txid"],
+        selectedSettlement,
+      });
+    }
+
+    const middlewareConfig = {
+      amount: BigInt(selectedSettlement.amount),
+      address: config.platformAddress,
+      network: config.stacksNetwork,
+      facilitatorUrl: config.facilitatorUrl || DEFAULT_FACILITATOR,
+      description,
+      tokenType: selectedSettlement.asset === "sBTC" ? "sBTC" : "STX",
+    };
+
+    if (selectedSettlement.asset === "sBTC") {
+      middlewareConfig.tokenContract = getDefaultSBTCContract(config.stacksNetwork);
+    }
+
+    const baseMiddleware = paymentMiddleware(middlewareConfig);
 
     // Use x402-stacks middleware
     baseMiddleware(req, res, (err) => {
@@ -146,11 +316,21 @@ export function paymentGate({ price, description = "", asset = "STX", acceptedAs
 
         // Attach payment info in our format for compatibility
         req.x402 = {
-          txid: payment.transaction,
-          amount: price,
-          asset: asset,
+          txid: payment.transaction || payment.txid,
+          amount: selectedSettlement.amount,
+          asset: payment.asset || selectedSettlement.asset,
           payer: payment.payer,
-          explorerUrl: getExplorerURL(payment.transaction, config.stacksNetwork),
+          explorerUrl: getExplorerURL(payment.transaction || payment.txid, config.stacksNetwork),
+          method: "payment-signature",
+          verified: true,
+          fundingSource: "principal",
+          principalPreserved: false,
+          proofStatus: "verified-onchain",
+          verificationDetails: {
+            settlementAsset: selectedSettlement.asset,
+            txid: payment.transaction || payment.txid,
+          },
+          quote: selectedSettlement,
         };
       }
 
@@ -160,50 +340,59 @@ export function paymentGate({ price, description = "", asset = "STX", acceptedAs
 }
 
 /**
- * Handle 402 response for multi-asset skills (STX + sBTC options).
- * x402-stacks doesn't natively support multiple asset options in one response,
- * so we build a custom 402 that shows both options.
+ * Handle explicit payment requirements so clients receive the selected quote,
+ * verifiable intent payload, and registry paths before settlement.
  */
-function handleMultiAsset402(req, res, { description, acceptedAssets }) {
-  const accepts = acceptedAssets.map((opt) => {
-    const base = {
-      scheme: "exact",
-      network: config.stacksNetwork === "mainnet" ? "stacks:1" : "stacks:2147483648",
-      amount: String(opt.amount),
-      asset: opt.asset,
-      payTo: config.platformAddress,
-      maxTimeoutSeconds: 300,
-    };
-
-    // Add sBTC contract info
-    if (opt.asset === "sBTC") {
-      const sbtcContract = getDefaultSBTCContract(config.stacksNetwork);
-      base.extra = {
-        tokenContract: sbtcContract,
-        name: "sBTC",
-      };
-    }
-
-    // Add USDCx contract info (Circle xReserve)
-    if (opt.asset === "USDCx") {
-      base.extra = {
-        tokenContract: config.usdcxContract,
-        name: "USDCx",
-        decimals: 6,
-      };
-    }
-
-    return base;
+function handlePaymentRequired(
+  req,
+  res,
+  { price, description, asset, acceptedAssets, intentId, selectedSettlement, paymentFailure = null }
+) {
+  const paymentRequired = buildPaymentRequired({
+    payTo: config.platformAddress,
+    amount: price,
+    resource: req.originalUrl,
+    description,
+    asset,
+    acceptedAssets,
   });
 
-  const paymentRequired = {
-    x402Version: 2,
-    resource: {
-      url: req.originalUrl,
-      description,
-    },
-    accepts,
+  if (intentId) {
+    paymentRequired.intent = {
+      id: intentId,
+      registryPath: `/registry/intents/${intentId}`,
+      attestationPath: `/registry/intents/${intentId}/attestation`,
+    };
+    res.set("x-intent-id", intentId);
+  }
+
+  if (req.intentRecord?.verifiableIntent) {
+    paymentRequired.verifiableIntent = req.intentRecord.verifiableIntent;
+    paymentRequired.registry = req.intentRecord.registry;
+  }
+
+  paymentRequired.settlement = {
+    selected: selectedSettlement,
+    acceptedProofHeaders:
+      selectedSettlement.asset === "USDCx"
+        ? ["x-payment-txid"]
+        : selectedSettlement.asset === "sBTC"
+          ? ["payment-signature", "x-payment-txid", "x-yield-payment"]
+          : ["payment-signature", "x-payment-txid"],
   };
+
+  if (paymentFailure) {
+    paymentRequired.error = paymentFailure.error;
+    paymentRequired.payment = {
+      txid: paymentFailure.txid,
+      asset: paymentFailure.asset,
+      method: paymentFailure.method,
+      verified: false,
+      proofStatus: paymentFailure.proofStatus,
+      verificationDetails: paymentFailure.verificationDetails || null,
+      explorerUrl: paymentFailure.explorerUrl || null,
+    };
+  }
 
   // Set header as per x402 spec
   res.set("payment-required", Buffer.from(JSON.stringify(paymentRequired)).toString("base64"));

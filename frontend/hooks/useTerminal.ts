@@ -20,9 +20,11 @@ export function useTerminal() {
   }, []);
 
   useEffect(() => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
-    const wsProtocol = baseUrl.startsWith('https') ? 'wss' : 'ws';
-    const wsUrl = `${wsProtocol}://${baseUrl.replace(/^https?:\/\//, '')}/ws`;
+    const explicitWsUrl = process.env.NEXT_PUBLIC_WS_URL;
+    const baseUrl = explicitWsUrl || process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+    const wsUrl = /^wss?:\/\//.test(baseUrl)
+      ? baseUrl
+      : `${baseUrl.startsWith('https') ? 'wss' : 'ws'}://${baseUrl.replace(/^https?:\/\//, '')}/ws`;
 
     const ws = new WebSocket(wsUrl);
 

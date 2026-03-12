@@ -9,6 +9,18 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+const DEFAULT_INTENT_REGISTRY_CONTRACT_ID =
+  "ST2FY55DK4NESNH6E5CJSNZP2CQ5PZ5BX65KWG39S.verifiable-intent-registry";
+const DEFAULT_INTENT_REGISTRY_TXID =
+  "0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2";
+const DEFAULT_INTENT_REGISTRY_EXPLORER_URL =
+  "https://explorer.hiro.so/txid/0x84c9b4ca29f38f28eb8329e83c6a363f15d72e60029f5b9aca73ceea6ed08df2?chain=testnet";
+const DEFAULT_INTENT_REGISTRY_PATH = "contracts/verifiable-intent-registry.clar";
+
+function getIntentRegistryContractName(contractId) {
+  return contractId.split(".")[1] || "verifiable-intent-registry";
+}
+
 const config = {
   // Network
   stacksNetwork: process.env.STACKS_NETWORK || "testnet",
@@ -32,6 +44,22 @@ const config = {
     (process.env.STACKS_NETWORK === "mainnet"
       ? "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx"
       : "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx"),
+
+  intentRegistry: {
+    contractId:
+      process.env.INTENT_REGISTRY_CONTRACT_ID || DEFAULT_INTENT_REGISTRY_CONTRACT_ID,
+    contractName: getIntentRegistryContractName(
+      process.env.INTENT_REGISTRY_CONTRACT_ID || DEFAULT_INTENT_REGISTRY_CONTRACT_ID
+    ),
+    contractPath: DEFAULT_INTENT_REGISTRY_PATH,
+    network: process.env.INTENT_REGISTRY_NETWORK || process.env.STACKS_NETWORK || "testnet",
+    deploymentStatus:
+      process.env.INTENT_REGISTRY_DEPLOYMENT_STATUS || "deployed-testnet",
+    deploymentTxid:
+      process.env.INTENT_REGISTRY_TXID || DEFAULT_INTENT_REGISTRY_TXID,
+    deploymentExplorerUrl:
+      process.env.INTENT_REGISTRY_EXPLORER_URL || DEFAULT_INTENT_REGISTRY_EXPLORER_URL,
+  },
 
   // Platform wallet
   platformPrivateKey: process.env.PLATFORM_PRIVATE_KEY || "",

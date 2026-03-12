@@ -55,6 +55,10 @@ export function generateWallet(network = "testnet") {
   return { privateKey, address };
 }
 
+export function deriveAddressFromPrivateKey(privateKey, network = config.stacksNetwork) {
+  return getAddressFromPrivateKey(privateKey, network);
+}
+
 // ---------------------------------------------------------------------------
 // Transaction creation & broadcasting
 // ---------------------------------------------------------------------------
@@ -210,6 +214,56 @@ export async function createSBTCTransfer({
  */
 export async function sendSBTC(params) {
   const transaction = await createSBTCTransfer(params);
+  const result = await broadcast(transaction);
+
+  const chain = config.stacksNetwork === "mainnet" ? "mainnet" : "testnet";
+  const explorerUrl = `https://explorer.hiro.so/txid/${result.txid}?chain=${chain}`;
+
+  return {
+    txid: result.txid,
+    explorerUrl,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// USDCx (SIP-010) Token Transfers
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates a signed USDCx SIP-010 transfer transaction.
+ *
+ * This is intentionally thin and testnet-safe: it prepares the canonical
+ * SIP-010 `transfer` contract call against the configured USDCx contract.
+ */
+export async function createUSDCxTransfer({
+  recipientAddress,
+  amount,
+  senderKey,
+  senderAddress,
+  memo = "",
+}) {
+  const [contractAddress, contractName] = config.usdcxContract.split(".");
+
+  const functionArgs = [
+    uintCV(BigInt(amount)),
+    standardPrincipalCV(senderAddress),
+    standardPrincipalCV(recipientAddress),
+    memo ? someCV(bufferCV(Buffer.from(memo.slice(0, 34)))) : noneCV(),
+  ];
+
+  return makeContractCall({
+    contractAddress,
+    contractName,
+    functionName: "transfer",
+    functionArgs,
+    senderKey,
+    network: config.stacksNetwork,
+    postConditionMode: PostConditionMode.Allow,
+  });
+}
+
+export async function sendUSDCx(params) {
+  const transaction = await createUSDCxTransfer(params);
   const result = await broadcast(transaction);
 
   const chain = config.stacksNetwork === "mainnet" ? "mainnet" : "testnet";
