@@ -43,6 +43,7 @@ import {
   getLedger,
   getLedgerSummary,
   listSettlements,
+  resolveDistributionStatus,
 } from "../services/ledger.js";
 import {
   createOrHydrateIntent,
@@ -130,14 +131,14 @@ function buildTransactionReferences({ intentId, payment, distributions = [] }) {
   for (const distribution of distributions) {
     references.push({
       kind: "distribution",
-      label: `Provider payout: ${distribution.name}`,
+      label: distribution.name ? `Provider payout: ${distribution.name}` : "Provider payout",
       txid: distribution.txid || "",
-      asset: distribution.asset,
-      amount: distribution.amount,
+      asset: distribution.asset || null,
+      amount: distribution.amount || "0",
       explorerUrl: distribution.explorerUrl || null,
       explorerReady: Boolean(distribution.explorerUrl),
-      status: distribution.status || (distribution.txid ? "broadcasted" : "recorded"),
-      note: distribution.note || null,
+      status: resolveDistributionStatus(distribution),
+      note: distribution.note || distribution.error || null,
     });
   }
 
@@ -506,7 +507,14 @@ router.post(
         });
       } catch (err) {
         log.error("API", `Revenue distribution failed: ${err.message}`);
-        distributions = [{ error: err.message }];
+        distributions = [
+          {
+            asset: payment.asset,
+            status: "failed",
+            error: err.message,
+            note: "Revenue distribution failed before any payout broadcast was confirmed.",
+          },
+        ];
       }
     } else {
       log.warn("API", "No provider addresses configured. Skipping distribution.");
