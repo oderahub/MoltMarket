@@ -65,6 +65,52 @@ function explorerUrl(txid) {
   return `https://explorer.hiro.so/txid/${txid}${chain}`;
 }
 
+function summarizeAcceptedProofHeaders(result) {
+  const settlementHeaders = result?.settlement?.acceptedProofHeaders;
+  if (Array.isArray(settlementHeaders) && settlementHeaders.length > 0) {
+    return settlementHeaders.join(", ");
+  }
+
+  const spendLimits = result?.verifiableIntent?.spendLimits;
+  const selectedAsset = result?.settlement?.selected?.asset;
+  if (!Array.isArray(spendLimits) || !selectedAsset) return null;
+
+  const matchedLimit = spendLimits.find((limit) => limit?.asset === selectedAsset);
+  return Array.isArray(matchedLimit?.acceptedProofHeaders) && matchedLimit.acceptedProofHeaders.length > 0
+    ? matchedLimit.acceptedProofHeaders.join(", ")
+    : null;
+}
+
+function formatExecutionFailure(execRes, result) {
+  const selectedAsset = result?.settlement?.selected?.asset || result?.payment?.asset || "unknown";
+  const acceptedHeaders = summarizeAcceptedProofHeaders(result);
+  const reason =
+    result?.error ||
+    (result?.x402Version ? "Backend still requires payment authorization." : null) ||
+    `Backend returned HTTP ${execRes.status}.`;
+
+  const lines = [
+    `   ⚠️  Execution blocked before completion.`,
+    `   HTTP status: ${execRes.status}`,
+    `   Reason: ${reason}`,
+  ];
+
+  if (selectedAsset) {
+    lines.push(`   Selected settlement rail: ${selectedAsset}`);
+  }
+
+  if (acceptedHeaders) {
+    lines.push(`   Accepted proof headers: ${acceptedHeaders}`);
+  }
+
+  const attestationPath = result?.registry?.attestationPath || result?.intent?.attestationPath;
+  if (attestationPath) {
+    lines.push(`   Registry attestation: ${attestationPath}`);
+  }
+
+  return lines;
+}
+
 // Broadcast log to frontend via WebSocket
 async function broadcastLog(step, type, message) {
   try {
@@ -284,6 +330,8 @@ async function main() {
   const broadcastResult = await broadcastTransaction({ transaction: tx, network: NETWORK });
 
   let txid = null;
+  let executionSucceeded = false;
+  let finalStatusLine = "STEP 7: Execution blocked before payment proof matched the selected settlement.";
   if (broadcastResult.error) {
     console.log(`   ⚠️  Broadcast error: ${broadcastResult.reason || broadcastResult.error}`);
     txid = "pending-demo-tx";
@@ -320,7 +368,9 @@ async function main() {
 
   const result = await execRes.json();
 
-  if (result.success) {
+  if (execRes.ok && result.success) {
+    executionSucceeded = true;
+    finalStatusLine = "STEP 7: Skill executed, revenue distributed";
     console.log(`   ✅ Skill executed successfully!`);
 
     if (result.output?.result) {
@@ -344,7 +394,11 @@ async function main() {
 
     await broadcastLog(7, "success", "Skill executed! Revenue distributed to providers.");
   } else {
+    for (const line of formatExecutionFailure(execRes, result)) {
+      console.log(line);
+    }
     console.log(`   Result:`, JSON.stringify(result, null, 2));
+    await broadcastLog(7, "error", "Execution blocked before completion. Demo stopped at payment verification.");
   }
 
   // =========================================================================
@@ -361,13 +415,13 @@ async function main() {
   console.log("      STEP 4: Agent B counter-offered @ 8000 microSTX");
   console.log("      STEP 5: Agent A accepted via PATCH /bounties/:id");
   console.log("      STEP 6: Agent B paid with StackingDAO YIELD (not capital!)");
-  console.log("      STEP 7: Skill executed, revenue distributed");
+  console.log(`      ${finalStatusLine}`);
   console.log("");
   console.log("   Key differentiators:");
   console.log("      ✓ Dynamic negotiation (not static pricing)");
   console.log("      ✓ Trust-based reputation system");
   console.log("      ✓ Self-funding via StackingDAO yield");
-  console.log("      ✓ REAL blockchain transactions");
+  console.log(`      ${txid && txid !== "pending-demo-tx" ? "✓" : "•"} REAL blockchain transactions`);
   console.log("      ✓ Multi-asset support (STX, sBTC, USDCx)");
   console.log("");
 
@@ -375,9 +429,19 @@ async function main() {
     highlightLink("VERIFY ON-CHAIN", explorerUrl(txid));
   }
 
-  console.log("   'That's not a simulation. That's a self-funding autonomous economy.'\n");
+  console.log(
+    executionSucceeded
+      ? "   'That's not a simulation. That's a self-funding autonomous economy.'\n"
+      : "   'The demo halted honestly at payment verification instead of claiming a false success.'\n"
+  );
 
-  await broadcastLog(7, "success", "Demo complete! Self-funding autonomous economy in action.");
+  if (executionSucceeded) {
+    await broadcastLog(7, "success", "Demo complete! Self-funding autonomous economy in action.");
+    return;
+  }
+
+  await broadcastLog(7, "error", "Demo blocked: payment verification did not clear the selected settlement rail.");
+  throw new Error("Demo blocked before execution completion.");
 }
 
 main().catch((err) => {
