@@ -68,12 +68,18 @@ async function exerciseDirectTxidProof({
   getSkill,
   getIntent,
   listSettlements,
+  skillId = "alpha-leak",
   requestedAsset,
   txid,
   fetchResponder,
+  includeIntentId = true,
+  retryRequestedAsset = requestedAsset,
+  retryIntentId = null,
+  initialInput = { task: "test-proof-validation" },
+  retryInput = initialInput,
 }) {
   const nativeFetch = globalThis.fetch.bind(globalThis);
-  const skill = getSkill("alpha-leak");
+  const skill = getSkill(skillId);
   let executeCalls = 0;
 
   return withPatchedGlobals(
@@ -104,32 +110,37 @@ async function exerciseDirectTxidProof({
       },
     ],
     async () => withTestServer(router, async (baseUrl) => {
-      const initialResponse = await nativeFetch(`${baseUrl}/skills/alpha-leak/execute`, {
+      const initialResponse = await nativeFetch(`${baseUrl}/skills/${skillId}/execute`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-payment-asset": requestedAsset,
         },
-        body: JSON.stringify({ task: "test-proof-validation" }),
+        body: JSON.stringify(initialInput),
       });
       assertEqual(initialResponse.status, 402, "initial quote status");
+
+      const initialBody = await initialResponse.json();
 
       const intentId = initialResponse.headers.get("x-intent-id");
       assert(intentId, "missing x-intent-id header");
 
-      const response = await nativeFetch(`${baseUrl}/skills/alpha-leak/execute`, {
+      const executionHeaders = {
+        "Content-Type": "application/json",
+        ...(retryRequestedAsset ? { "x-payment-asset": retryRequestedAsset } : {}),
+        ...(includeIntentId ? { "x-intent-id": retryIntentId || intentId } : {}),
+        "x-payment-txid": txid,
+      };
+
+      const response = await nativeFetch(`${baseUrl}/skills/${skillId}/execute`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-payment-asset": requestedAsset,
-          "x-intent-id": intentId,
-          "x-payment-txid": txid,
-        },
-        body: JSON.stringify({ task: "test-proof-validation" }),
+        headers: executionHeaders,
+        body: JSON.stringify(retryInput),
       });
 
       const body = await response.json();
       return {
+        initialBody,
         response,
         body,
         executeCalls,
@@ -137,6 +148,119 @@ async function exerciseDirectTxidProof({
         intent: getIntent(intentId),
         settlements: listSettlements({ intentId }),
       };
+    })
+  );
+}
+
+async function withSimulatedYield({ getSimulatedYield, resetSimulatedYield }, amount, fn) {
+  const originalYield = getSimulatedYield();
+  resetSimulatedYield(amount);
+  try {
+    return await fn();
+  } finally {
+    resetSimulatedYield(originalYield);
+  }
+}
+
+function buildMockSip10TransferTx({
+  contractId,
+  amount,
+  recipient,
+  sender = "STTESTPAYER",
+  status = "success",
+  functionName = "transfer",
+}) {
+  return {
+    tx_status: status,
+    tx_type: "contract_call",
+    sender_address: sender,
+    contract_call: {
+      contract_id: contractId,
+      function_name: functionName,
+      function_args: [
+        { repr: `u${amount}` },
+        { repr: `'${sender}` },
+        { repr: `'${recipient}` },
+        { repr: "none" },
+      ],
+    },
+  };
+}
+
+async function exerciseYieldPayment({
+  router,
+  getSkill,
+  getIntent,
+  listSettlements,
+  getSimulatedYield,
+  resetSimulatedYield,
+  requestedAsset = null,
+  initialYield,
+  yieldTxid = `yield-payment-${Date.now()}`,
+}) {
+  const nativeFetch = globalThis.fetch.bind(globalThis);
+  const skill = getSkill("bounty-executor");
+  let executeCalls = 0;
+
+  return withPatchedGlobals(
+    [
+      {
+        object: skill,
+        key: "execute",
+        value: async () => {
+          executeCalls += 1;
+          return { ok: true };
+        },
+      },
+      {
+        object: skill,
+        key: "providers",
+        value: [],
+      },
+    ],
+    async () => withSimulatedYield({ getSimulatedYield, resetSimulatedYield }, initialYield, async () => {
+      return withTestServer(router, async (baseUrl) => {
+        const initialHeaders = {
+          "Content-Type": "application/json",
+        };
+        if (requestedAsset) initialHeaders["x-payment-asset"] = requestedAsset;
+
+        const initialResponse = await nativeFetch(`${baseUrl}/skills/bounty-executor/execute`, {
+          method: "POST",
+          headers: initialHeaders,
+          body: JSON.stringify({ task: "test-yield-validation" }),
+        });
+        assertEqual(initialResponse.status, 402, "initial quote status");
+
+        const initialBody = await initialResponse.json();
+        const intentId = initialResponse.headers.get("x-intent-id");
+        assert(intentId, "missing x-intent-id header");
+
+        const executionHeaders = {
+          "Content-Type": "application/json",
+          "x-intent-id": intentId,
+          "x-yield-payment": yieldTxid,
+        };
+        if (requestedAsset) executionHeaders["x-payment-asset"] = requestedAsset;
+
+        const response = await nativeFetch(`${baseUrl}/skills/bounty-executor/execute`, {
+          method: "POST",
+          headers: executionHeaders,
+          body: JSON.stringify({ task: "test-yield-validation" }),
+        });
+
+        const body = await response.json();
+        return {
+          initialBody,
+          response,
+          body,
+          executeCalls,
+          intentId,
+          intent: getIntent(intentId),
+          settlements: listSettlements({ intentId }),
+          remainingYield: getSimulatedYield(),
+        };
+      });
     })
   );
 }
@@ -173,6 +297,7 @@ async function main() {
     recordIntentSettlement,
     completeIntent,
   } = await import("../src/services/intents.js");
+  const { getSimulatedYield, resetSimulatedYield } = await import("../src/services/treasury.js");
   const router = (await import("../src/routes/api.js")).default;
 
   console.log("\n🧪 MoltMarket v2 Tests\n");
@@ -545,14 +670,12 @@ async function main() {
       fetchResponder: async () => ({
         ok: true,
         status: 200,
-        json: async () => ({
-          tx_status: "success",
-          tx_type: "contract_call",
-          contract_call: {
-            contract_id: usdcxQuote.contractAddress,
-          },
-          sender_address: "STTESTPAYER",
-        }),
+        json: async () =>
+          buildMockSip10TransferTx({
+            contractId: usdcxQuote.contractAddress,
+            amount: usdcxQuote.amount,
+            recipient: usdcxQuote.payTo,
+          }),
       }),
     });
 
@@ -563,6 +686,240 @@ async function main() {
     assertEqual(result.intent.settlement.payment.verified, true);
     assertEqual(result.intent.settlement.payment.proofStatus, "verified-onchain");
     assertEqual(result.settlements.length, 1);
+  });
+
+  await test("matching USDCx contract proof with wrong staged amount is rejected before execution", async () => {
+    const usdcxQuote = resolveSettlementQuote({
+      requestedAsset: "USDCx",
+      amount: "10000",
+      asset: "STX",
+      acceptedAssets: [
+        { asset: "STX", amount: "10000" },
+        { asset: "USDCx", amount: "10000" },
+      ],
+    });
+
+    const result = await exerciseDirectTxidProof({
+      router,
+      getSkill,
+      getIntent,
+      listSettlements,
+      requestedAsset: "USDCx",
+      txid: "0xwrong-amount",
+      fetchResponder: async () => ({
+        ok: true,
+        status: 200,
+        json: async () =>
+          buildMockSip10TransferTx({
+            contractId: usdcxQuote.contractAddress,
+            amount: "9999",
+            recipient: usdcxQuote.payTo,
+          }),
+      }),
+    });
+
+    assertEqual(result.response.status, 402);
+    assertEqual(result.executeCalls, 0);
+    assertEqual(result.body.payment.verified, false);
+    assertEqual(result.body.payment.proofStatus, "tx-found-quote-unconfirmed");
+    assertEqual(result.body.payment.verificationDetails.expectedAmount, "10000");
+    assertEqual(result.body.payment.verificationDetails.observedAmount, "9999");
+    assertEqual(result.settlements.length, 0);
+  });
+
+  await test("matching USDCx contract proof with wrong payTo recipient is rejected before execution", async () => {
+    const usdcxQuote = resolveSettlementQuote({
+      requestedAsset: "USDCx",
+      amount: "10000",
+      asset: "STX",
+      acceptedAssets: [
+        { asset: "STX", amount: "10000" },
+        { asset: "USDCx", amount: "10000" },
+      ],
+    });
+
+    const result = await exerciseDirectTxidProof({
+      router,
+      getSkill,
+      getIntent,
+      listSettlements,
+      requestedAsset: "USDCx",
+      txid: "0xwrong-recipient",
+      fetchResponder: async () => ({
+        ok: true,
+        status: 200,
+        json: async () =>
+          buildMockSip10TransferTx({
+            contractId: usdcxQuote.contractAddress,
+            amount: usdcxQuote.amount,
+            recipient: "STWRONGPAYTOADDRESS0000000000000000000000",
+          }),
+      }),
+    });
+
+    assertEqual(result.response.status, 402);
+    assertEqual(result.executeCalls, 0);
+    assertEqual(result.body.payment.verified, false);
+    assertEqual(result.body.payment.proofStatus, "tx-found-quote-unconfirmed");
+    assertEqual(result.body.payment.verificationDetails.payToMatchConfirmed, false);
+    assertEqual(result.settlements.length, 0);
+  });
+
+  await test("staged USDCx direct-txid retry succeeds without repeating x-payment-asset when x-intent-id is preserved", async () => {
+    const usdcxQuote = resolveSettlementQuote({
+      requestedAsset: "USDCx",
+      amount: "10000",
+      asset: "STX",
+      acceptedAssets: [
+        { asset: "STX", amount: "10000" },
+        { asset: "USDCx", amount: "10000" },
+      ],
+    });
+
+    const result = await exerciseDirectTxidProof({
+      router,
+      getSkill,
+      getIntent,
+      listSettlements,
+      requestedAsset: "USDCx",
+      retryRequestedAsset: null,
+      txid: "0xstaged-usdcx-proof",
+      fetchResponder: async () => ({
+        ok: true,
+        status: 200,
+        json: async () =>
+          buildMockSip10TransferTx({
+            contractId: usdcxQuote.contractAddress,
+            amount: usdcxQuote.amount,
+            recipient: usdcxQuote.payTo,
+          }),
+      }),
+    });
+
+    assertEqual(result.initialBody.settlement.selected.asset, "USDCx");
+    assertEqual(result.response.status, 200);
+    assertEqual(result.executeCalls, 1);
+    assertEqual(result.intent.status, "completed");
+    assertEqual(result.intent.settlement.payment.verified, true);
+    assertEqual(result.settlements.length, 1);
+  });
+
+  await test("successful direct-txid proof is rejected when staged x-intent-id continuity is missing", async () => {
+    const usdcxQuote = resolveSettlementQuote({
+      requestedAsset: "USDCx",
+      amount: "10000",
+      asset: "STX",
+      acceptedAssets: [
+        { asset: "STX", amount: "10000" },
+        { asset: "USDCx", amount: "10000" },
+      ],
+    });
+
+    const result = await exerciseDirectTxidProof({
+      router,
+      getSkill,
+      getIntent,
+      listSettlements,
+      requestedAsset: "USDCx",
+      includeIntentId: false,
+      txid: "0xmissing-intent-link",
+      fetchResponder: async () => ({
+        ok: true,
+        status: 200,
+        json: async () =>
+          buildMockSip10TransferTx({
+            contractId: usdcxQuote.contractAddress,
+            amount: usdcxQuote.amount,
+            recipient: usdcxQuote.payTo,
+          }),
+      }),
+    });
+
+    assertEqual(result.response.status, 402);
+    assertEqual(result.executeCalls, 0);
+    assertEqual(result.body.payment.verified, false);
+    assertEqual(result.body.payment.proofStatus, "tx-found-intent-unconfirmed");
+    assertEqual(result.body.payment.verificationDetails.intentLinkConfirmed, false);
+    assertEqual(result.settlements.length, 0);
+  });
+
+  await test("eligible sBTC yield payment spends simulated yield before execution", async () => {
+    const result = await exerciseYieldPayment({
+      router,
+      getSkill,
+      getIntent,
+      listSettlements,
+      getSimulatedYield,
+      resetSimulatedYield,
+      requestedAsset: "sBTC",
+      initialYield: 1200,
+      yieldTxid: "yield-payment-success",
+    });
+
+    assertEqual(result.initialBody.settlement.selected.asset, "sBTC");
+    assert(result.initialBody.settlement.acceptedProofHeaders.includes("x-yield-payment"));
+    assertEqual(result.response.status, 200);
+    assertEqual(result.executeCalls, 1);
+    assertEqual(result.remainingYield, 400);
+    assertEqual(result.intent.status, "completed");
+    assertEqual(result.intent.settlement.payment.asset, "sBTC");
+    assertEqual(result.intent.settlement.payment.verified, true);
+    assertEqual(result.intent.settlement.payment.proofStatus, "yield-helper");
+    assertEqual(result.settlements.length, 1);
+  });
+
+  await test("insufficient simulated yield fails closed before execution", async () => {
+    const result = await exerciseYieldPayment({
+      router,
+      getSkill,
+      getIntent,
+      listSettlements,
+      getSimulatedYield,
+      resetSimulatedYield,
+      requestedAsset: "sBTC",
+      initialYield: 100,
+      yieldTxid: "yield-payment-insufficient",
+    });
+
+    assertEqual(result.initialBody.settlement.selected.asset, "sBTC");
+    assert(result.initialBody.settlement.acceptedProofHeaders.includes("x-yield-payment"));
+    assertEqual(result.response.status, 402);
+    assertEqual(result.executeCalls, 0);
+    assertEqual(result.remainingYield, 100);
+    assertEqual(result.intent.status, "payment_required");
+    assertEqual(result.intent.settlement.payment, null);
+    assertEqual(result.body.error, "Insufficient simulated yield for the selected settlement amount.");
+    assertEqual(result.body.payment.verified, false);
+    assertEqual(result.body.payment.proofStatus, "yield-helper");
+    assertEqual(result.body.payment.verificationDetails.availableYield, 100);
+    assertEqual(result.body.payment.verificationDetails.neededAmount, 800);
+    assertEqual(result.settlements.length, 0);
+  });
+
+  await test("non-eligible selected settlement rejects yield helper header", async () => {
+    const result = await exerciseYieldPayment({
+      router,
+      getSkill,
+      getIntent,
+      listSettlements,
+      getSimulatedYield,
+      resetSimulatedYield,
+      initialYield: 1200,
+      yieldTxid: "yield-payment-ineligible",
+    });
+
+    assertEqual(result.initialBody.settlement.selected.asset, "USDCx");
+    assert(!result.initialBody.settlement.acceptedProofHeaders.includes("x-yield-payment"));
+    assertEqual(result.response.status, 402);
+    assertEqual(result.executeCalls, 0);
+    assertEqual(result.remainingYield, 1200);
+    assertEqual(result.intent.status, "payment_required");
+    assertEqual(result.intent.settlement.payment, null);
+    assertEqual(result.body.error, "Yield-backed payment is only available for sBTC settlement quotes.");
+    assertEqual(result.body.payment.asset, "USDCx");
+    assertEqual(result.body.payment.verified, false);
+    assertEqual(result.body.payment.proofStatus, "yield-helper");
+    assertEqual(result.settlements.length, 0);
   });
 
   await test("listIntents filters by status and asset", () => {
@@ -626,7 +983,7 @@ async function main() {
       intentId: "intent-sbtc",
       settlementMethod: "direct-txid",
     });
-    const settlements = listSettlements({ asset: "sBTC" });
+    const settlements = listSettlements({ asset: "sBTC", txid: "0xt2" });
     assertEqual(settlements.length, 1);
     assertEqual(settlements[0].intentId, "intent-sbtc");
   });
@@ -638,10 +995,10 @@ async function main() {
 
   await test("getLedgerSummary computes per-asset totals", () => {
     const s = getLedgerSummary();
-    assertEqual(s.totalPayments, 3);
+    assertEqual(s.totalPayments, 5);
     assertEqual(s.totalIncomingMicroSTX, "5000");
-    assertEqual(s.totalsByAsset.sBTC.incoming, "1000");
-    assertEqual(s.totalsByAsset.USDCx.incoming, "10000");
+    assertEqual(s.totalsByAsset.sBTC.incoming, "1800");
+    assertEqual(s.totalsByAsset.USDCx.incoming, "20000");
   });
 
   console.log(`\n${"=".repeat(40)}`);
