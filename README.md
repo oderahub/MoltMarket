@@ -180,7 +180,8 @@ Common rejection states exposed through `payment-response` and 402 retries:
 - `pending-onchain`
 - `verification-unavailable`
 - `tx-status-not-success`
-- `yield-helper` for yield-backed demo flows
+
+Yield-backed demo flows use `yield-helper` as the proof status. Check the paired `verified` flag to distinguish accepted yield execution from rejected yield validation.
 
 ### Deployment alignment notes
 
