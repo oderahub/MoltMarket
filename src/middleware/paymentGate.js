@@ -26,9 +26,12 @@ import {
   resolveSettlementQuote,
   PAYMENT_RESPONSE_HEADER,
 } from "../utils/x402.js";
+import { markIntentPaymentRequired } from "../services/intents.js";
+import { spendSimulatedYield } from "../services/treasury.js";
 
 // Default facilitator URL from x402-stacks
 const DEFAULT_FACILITATOR = "https://x402-backend-7eby.onrender.com";
+const YIELD_PAYMENT_ELIGIBLE_ASSET = "sBTC";
 
 /**
  * Creates an Express middleware that gates a route behind x402 payment.
@@ -44,6 +47,89 @@ const DEFAULT_FACILITATOR = "https://x402-backend-7eby.onrender.com";
 function readHeader(req, name) {
   const value = req.headers[name];
   return typeof value === "string" ? value : null;
+}
+
+function normalizeString(value) {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  return text.length > 0 ? text : null;
+}
+
+function parseUintLike(value) {
+  if (typeof value === "bigint" || typeof value === "number") return String(value);
+  if (typeof value !== "string") return null;
+
+  const text = value.trim();
+  if (/^u\d+$/.test(text)) return text.slice(1);
+  if (/^\d+$/.test(text)) return text;
+  return null;
+}
+
+function parsePrincipalLike(value) {
+  if (typeof value !== "string") return null;
+
+  const text = value.trim();
+  if (!text || text === "none") return null;
+  return text.startsWith("'") ? text.slice(1) : text;
+}
+
+function extractUintArg(arg) {
+  if (!arg || typeof arg !== "object") return parseUintLike(arg);
+  return parseUintLike(arg.repr) || parseUintLike(arg.value);
+}
+
+function extractPrincipalArg(arg) {
+  if (!arg || typeof arg !== "object") return parsePrincipalLike(arg);
+  return (
+    normalizeString(arg.address) ||
+    parsePrincipalLike(arg.repr) ||
+    parsePrincipalLike(arg.value)
+  );
+}
+
+function extractObservedSettlementDetails(txData) {
+  if (txData?.tx_type === "token_transfer") {
+    return {
+      amount: normalizeString(txData.token_transfer?.amount),
+      recipient: normalizeString(txData.token_transfer?.recipient_address),
+      functionName: null,
+    };
+  }
+
+  if (txData?.tx_type === "contract_call") {
+    const functionArgs = Array.isArray(txData.contract_call?.function_args)
+      ? txData.contract_call.function_args
+      : [];
+
+    return {
+      amount: extractUintArg(functionArgs[0]),
+      recipient: extractPrincipalArg(functionArgs[2]),
+      functionName: normalizeString(txData.contract_call?.function_name),
+    };
+  }
+
+  return {
+    amount: null,
+    recipient: null,
+    functionName: normalizeString(txData?.contract_call?.function_name),
+  };
+}
+
+function resolveDirectTxidIntentContext(req, intentId, selectedSettlement) {
+  const stagedSettlement = req.intentRecord?.settlement?.selected || null;
+  const intentLinkConfirmed = Boolean(
+    intentId &&
+      req.intentRecord?.status === "payment_required" &&
+      stagedSettlement &&
+      req.intentRecord?.skillId === req.skill?.id &&
+      req.intentRecord?.settlement?.paymentRequestPath === req.originalUrl
+  );
+
+  return {
+    intentLinkConfirmed,
+    stagedSettlement,
+    validationSettlement: intentLinkConfirmed ? stagedSettlement : selectedSettlement,
+  };
 }
 
 function buildRejectedDirectTxidPayment({
@@ -69,11 +155,71 @@ function buildRejectedDirectTxidPayment({
   };
 }
 
+function buildRejectedYieldPayment({
+  txid,
+  selectedSettlement,
+  verificationDetails,
+}) {
+  return {
+    txid,
+    amount: selectedSettlement.amount,
+    asset: selectedSettlement.asset,
+    payer: "yield-engine",
+    explorerUrl: null,
+    yieldPowered: true,
+    fundingSource: "yield",
+    principalPreserved: true,
+    method: "yield-payment",
+    verified: false,
+    proofStatus: "yield-helper",
+    verificationDetails,
+    quote: selectedSettlement,
+  };
+}
+
 function rejectInvalidDirectTxidProof(req, res, options) {
   const { price, description, asset, acceptedAssets, intentId, selectedSettlement, payment } = options;
   const errorReason = getPaymentFailureReason(payment);
 
   log.warn("x402", `${errorReason} txid: ${payment.txid}`);
+  res.set(
+    PAYMENT_RESPONSE_HEADER,
+    buildPaymentResponse({
+      success: false,
+      txid: payment.txid,
+      asset: selectedSettlement.asset,
+      intentId: intentId || "",
+      errorReason,
+    })
+  );
+
+  return handlePaymentRequired(req, res, {
+    price,
+    description,
+    asset,
+    acceptedAssets,
+    intentId,
+    selectedSettlement,
+    paymentFailure: {
+      ...payment,
+      error: errorReason,
+    },
+  });
+}
+
+function rejectInvalidYieldPayment(req, res, options) {
+  const {
+    price,
+    description,
+    asset,
+    acceptedAssets,
+    intentId,
+    selectedSettlement,
+    payment,
+    errorReason,
+  } = options;
+
+  log.warn("x402", `${errorReason} settlement: ${selectedSettlement.asset}`);
   res.set(
     PAYMENT_RESPONSE_HEADER,
     buildPaymentResponse({
@@ -113,11 +259,64 @@ export function paymentGate({
       amount: price,
       asset,
       acceptedAssets,
+      payTo: config.platformAddress,
     });
 
     // Check for YIELD PAYMENT (StackingDAO yield-powered)
     const yieldPayment = readHeader(req, "x-yield-payment");
     if (yieldPayment) {
+      const spendAmount = Number(selectedSettlement.amount);
+
+      if (selectedSettlement.asset !== YIELD_PAYMENT_ELIGIBLE_ASSET) {
+        return rejectInvalidYieldPayment(req, res, {
+          price,
+          description,
+          asset,
+          acceptedAssets,
+          intentId,
+          selectedSettlement,
+          payment: buildRejectedYieldPayment({
+            txid: yieldPayment,
+            selectedSettlement,
+            verificationDetails: {
+              source: "stacking-dao-yield",
+              principalPreserved: true,
+              explorerReady: false,
+              selectedSettlementAsset: selectedSettlement.asset,
+              eligibleSettlementAsset: YIELD_PAYMENT_ELIGIBLE_ASSET,
+            },
+          }),
+          errorReason: "Yield-backed payment is only available for sBTC settlement quotes.",
+        });
+      }
+
+      const spendResult = spendSimulatedYield(spendAmount);
+      if (!spendResult.success) {
+        return rejectInvalidYieldPayment(req, res, {
+          price,
+          description,
+          asset,
+          acceptedAssets,
+          intentId,
+          selectedSettlement,
+          payment: buildRejectedYieldPayment({
+            txid: yieldPayment,
+            selectedSettlement,
+            verificationDetails: {
+              source: "stacking-dao-yield",
+              principalPreserved: true,
+              explorerReady: false,
+              selectedSettlementAsset: selectedSettlement.asset,
+              eligibleSettlementAsset: YIELD_PAYMENT_ELIGIBLE_ASSET,
+              availableYield: spendResult.remaining,
+              requestedAmount: spendAmount,
+              neededAmount: spendResult.needed,
+            },
+          }),
+          errorReason: "Insufficient simulated yield for the selected settlement amount.",
+        });
+      }
+
       log.success("x402", `[YIELD_ENGINE] Yield payment accepted: ${yieldPayment}`);
 
       // Attach payment info for yield payment
@@ -137,6 +336,9 @@ export function paymentGate({
           source: "stacking-dao-yield",
           principalPreserved: true,
           explorerReady: false,
+          selectedSettlementAsset: selectedSettlement.asset,
+          spentAmount: spendAmount,
+          remainingYield: spendResult.remaining,
         },
         quote: selectedSettlement,
       };
@@ -147,6 +349,8 @@ export function paymentGate({
     const directTxid = readHeader(req, "x-payment-txid");
     if (directTxid) {
       log.info("x402", `Direct txid proof received: ${directTxid}`);
+      const { intentLinkConfirmed, stagedSettlement, validationSettlement } =
+        resolveDirectTxidIntentContext(req, intentId, selectedSettlement);
 
       // Verify txid exists on chain
       try {
@@ -155,49 +359,86 @@ export function paymentGate({
 
         if (verifyRes.ok) {
           const txData = await verifyRes.json();
-          const expectedContract = selectedSettlement.contractAddress || null;
+          const expectedContract = validationSettlement.contractAddress || null;
           const observedContract = txData.contract_call?.contract_id || null;
+          const observedSettlement = extractObservedSettlementDetails(txData);
           const assetMatchConfirmed = expectedContract
             ? observedContract === expectedContract
             : txData.tx_type === "token_transfer";
           const txStatusConfirmed = txData.tx_status === "success";
+          const transferFunctionConfirmed = expectedContract
+            ? observedSettlement.functionName === "transfer"
+            : true;
+          const amountMatchConfirmed = validationSettlement.amount
+            ? observedSettlement.amount === String(validationSettlement.amount)
+            : true;
+          const payToMatchConfirmed = validationSettlement.payTo
+            ? observedSettlement.recipient === validationSettlement.payTo
+            : true;
+          const proofStatus = !txStatusConfirmed
+            ? "tx-status-not-success"
+            : !intentLinkConfirmed
+              ? "tx-found-intent-unconfirmed"
+              : !assetMatchConfirmed
+                ? "tx-found-asset-unconfirmed"
+                : !transferFunctionConfirmed || !amountMatchConfirmed || !payToMatchConfirmed
+                  ? "tx-found-quote-unconfirmed"
+                  : "verified-onchain";
 
-          const payment = txStatusConfirmed && assetMatchConfirmed
+          const payment = proofStatus === "verified-onchain"
             ? {
                 txid: directTxid,
-                amount: selectedSettlement.amount,
-                asset: selectedSettlement.asset,
+                amount: validationSettlement.amount,
+                asset: validationSettlement.asset,
                 payer: txData.sender_address || "unknown",
                 explorerUrl: getExplorerTxUrl(directTxid),
                 method: "direct-txid",
                 verified: true,
                 fundingSource: "principal",
                 principalPreserved: false,
-                proofStatus: "verified-onchain",
+                proofStatus,
                 verificationDetails: {
                   txStatus: txData.tx_status,
                   txType: txData.tx_type,
                   expectedContract,
                   observedContract,
+                  expectedAmount: String(validationSettlement.amount || ""),
+                  observedAmount: observedSettlement.amount,
+                  expectedRecipient: validationSettlement.payTo || null,
+                  observedRecipient: observedSettlement.recipient,
+                  observedFunctionName: observedSettlement.functionName,
                   assetMatchConfirmed,
+                  amountMatchConfirmed,
+                  payToMatchConfirmed,
+                  transferFunctionConfirmed,
                   txStatusConfirmed,
+                  intentLinkConfirmed,
+                  stagedIntentId: stagedSettlement ? intentId : null,
                 },
-                quote: selectedSettlement,
+                quote: validationSettlement,
               }
             : buildRejectedDirectTxidPayment({
                 txid: directTxid,
-                selectedSettlement,
+                selectedSettlement: validationSettlement,
                 payer: txData.sender_address || "unknown",
-                proofStatus: assetMatchConfirmed
-                  ? "tx-status-not-success"
-                  : "tx-found-asset-unconfirmed",
+                proofStatus,
                 verificationDetails: {
                   txStatus: txData.tx_status,
                   txType: txData.tx_type,
                   expectedContract,
                   observedContract,
+                  expectedAmount: String(validationSettlement.amount || ""),
+                  observedAmount: observedSettlement.amount,
+                  expectedRecipient: validationSettlement.payTo || null,
+                  observedRecipient: observedSettlement.recipient,
+                  observedFunctionName: observedSettlement.functionName,
                   assetMatchConfirmed,
+                  amountMatchConfirmed,
+                  payToMatchConfirmed,
+                  transferFunctionConfirmed,
                   txStatusConfirmed,
+                  intentLinkConfirmed,
+                  stagedIntentId: stagedSettlement ? intentId : null,
                 },
               });
 
@@ -208,7 +449,7 @@ export function paymentGate({
               asset,
               acceptedAssets,
               intentId,
-              selectedSettlement,
+              selectedSettlement: validationSettlement,
               payment,
             });
           }
@@ -223,16 +464,20 @@ export function paymentGate({
             asset,
             acceptedAssets,
             intentId,
-            selectedSettlement,
+            selectedSettlement: validationSettlement,
             payment: buildRejectedDirectTxidPayment({
               txid: directTxid,
-              selectedSettlement,
+              selectedSettlement: validationSettlement,
               payer: "pending",
               proofStatus: "pending-onchain",
               verificationDetails: {
                 txStatus: "pending-or-not-found",
-                expectedContract: selectedSettlement.contractAddress || null,
+                expectedContract: validationSettlement.contractAddress || null,
+                expectedAmount: String(validationSettlement.amount || ""),
+                expectedRecipient: validationSettlement.payTo || null,
                 httpStatus: verifyRes.status,
+                intentLinkConfirmed,
+                stagedIntentId: stagedSettlement ? intentId : null,
               },
             }),
           });
@@ -244,15 +489,19 @@ export function paymentGate({
           asset,
           acceptedAssets,
           intentId,
-          selectedSettlement,
+            selectedSettlement: validationSettlement,
           payment: buildRejectedDirectTxidPayment({
             txid: directTxid,
-            selectedSettlement,
+              selectedSettlement: validationSettlement,
             payer: "unverified",
             proofStatus: "verification-unavailable",
             verificationDetails: {
               error: err.message,
-              expectedContract: selectedSettlement.contractAddress || null,
+                expectedContract: validationSettlement.contractAddress || null,
+                expectedAmount: String(validationSettlement.amount || ""),
+                expectedRecipient: validationSettlement.payTo || null,
+                intentLinkConfirmed,
+                stagedIntentId: stagedSettlement ? intentId : null,
             },
           }),
         });
@@ -356,6 +605,14 @@ function handlePaymentRequired(
     asset,
     acceptedAssets,
   });
+
+  if (intentId) {
+    const updatedIntent = markIntentPaymentRequired(intentId, {
+      paymentRequestPath: req.originalUrl,
+      selectedSettlement,
+    });
+    if (updatedIntent) req.intentRecord = updatedIntent;
+  }
 
   if (intentId) {
     paymentRequired.intent = {

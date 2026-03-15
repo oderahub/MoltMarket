@@ -89,8 +89,9 @@ export function resolveSettlementQuote({
   amount,
   asset = "STX",
   acceptedAssets = null,
+  payTo = config.platformAddress,
 }) {
-  const options = normalizeAcceptedAssets({ amount, asset, acceptedAssets });
+  const options = normalizeAcceptedAssets({ payTo, amount, asset, acceptedAssets });
   if (!requestedAsset) return options[0];
 
   return (
@@ -123,6 +124,10 @@ export function getPaymentFailureReason(payment = {}) {
   switch (proofStatus) {
     case "tx-found-asset-unconfirmed":
       return "Payment proof does not match the selected settlement asset or contract.";
+    case "tx-found-quote-unconfirmed":
+      return "Payment proof does not match the staged settlement amount or payTo recipient.";
+    case "tx-found-intent-unconfirmed":
+      return "Payment proof is not linked to the staged intent for this execution request.";
     case "pending-onchain":
       return "Payment proof is still pending or was not found on-chain.";
     case "verification-unavailable":

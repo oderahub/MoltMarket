@@ -80,6 +80,17 @@ function buildSettlementOptions(skill) {
   });
 }
 
+function normalizeSelectedSettlement(selectedSettlement = null) {
+  if (!selectedSettlement || typeof selectedSettlement !== "object") return null;
+
+  return {
+    ...selectedSettlement,
+    ...(selectedSettlement.amount !== undefined
+      ? { amount: String(selectedSettlement.amount) }
+      : {}),
+  };
+}
+
 function getAssetDecimals(asset) {
   if (asset === "STX") return 6;
   if (asset === "sBTC") return 8;
@@ -273,6 +284,7 @@ export function createOrHydrateIntent({
       network: config.stacksNetwork,
       options: settlementOptions,
       paymentRequestPath: request.path || null,
+      selected: null,
       payment: null,
     },
     execution: null,
@@ -292,6 +304,8 @@ export function markIntentPaymentRequired(intentId, details = {}) {
       ...intent.settlement,
       paymentRequestPath:
         details.paymentRequestPath || intent.settlement?.paymentRequestPath || null,
+      selected:
+        normalizeSelectedSettlement(details.selectedSettlement) || intent.settlement?.selected || null,
     };
   });
 }

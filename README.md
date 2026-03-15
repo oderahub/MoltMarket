@@ -19,6 +19,14 @@ MoltMarket V2 keeps the existing Express/x402 engine as the source of truth and 
 - **Settlement clarity:** high-value bounty flows prefer `USDCx` to reduce volatility during payout.
 - **Proof loop:** every on-chain step should leave either a Hiro explorer link or an explicit registry reference.
 
+### Current branch highlights
+
+- **Intent-linked execution:** the Next.js chat client now forwards `x-intent-id` so backend execution can validate payment proofs against the staged intent instead of a loose client-side quote.
+- **Quote-level txid verification:** direct `x-payment-txid` proof now checks the staged settlement asset, contract, transfer function, amount, and `payTo` recipient before execution unlocks.
+- **Yield guardrails:** `x-yield-payment` is only valid for `sBTC` settlement quotes, and simulated yield is debited before the skill run proceeds.
+- **Registry continuity:** payment-required responses now persist the selected settlement onto the intent record so registry and attestation endpoints reflect the exact quote the client attempted to settle.
+- **Regression coverage:** the backend test suite now exercises wrong-amount, wrong-recipient, wrong-intent, pending-proof, and yield-insufficient paths in addition to the happy path.
+
 ---
 
 ## 🚀 The Competitive Edge
@@ -157,6 +165,22 @@ curl -s -X POST http://localhost:3001/api/chat \
 # Trigger the 7-Step Autonomous Negotiation Demo
 npm run negotiate
 ```
+
+### Payment proof checks now enforced
+
+- `payment-signature`: standard x402 signed-payment flow.
+- `x-payment-txid`: accepted only when the on-chain transaction matches the staged intent, settlement asset or contract, transfer amount, and destination address.
+- `x-yield-payment`: accepted only for `sBTC` quotes, with simulated yield balance checks before execution.
+
+Common rejection states exposed through `payment-response` and 402 retries:
+
+- `tx-found-intent-unconfirmed`
+- `tx-found-quote-unconfirmed`
+- `tx-found-asset-unconfirmed`
+- `pending-onchain`
+- `verification-unavailable`
+- `tx-status-not-success`
+- `yield-helper` for yield-backed demo flows
 
 ### Deployment alignment notes
 

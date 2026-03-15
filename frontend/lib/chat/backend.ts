@@ -4,6 +4,7 @@ const DEFAULT_BACKEND_URL =
   "http://127.0.0.1:3000";
 
 export type ChatExecutionContext = {
+  intentId?: string;
   paymentHeader?: {
     name: string;
     value: string;
@@ -181,6 +182,10 @@ function buildHeaders(
 
   if (typeof metadata?.preferredAsset === "string" && metadata.preferredAsset) {
     headers["x-payment-asset"] = metadata.preferredAsset;
+  }
+
+  if (executionContext?.intentId) {
+    headers["x-intent-id"] = executionContext.intentId;
   }
 
   if (executionContext?.paymentHeader?.name && executionContext.paymentHeader.value) {
