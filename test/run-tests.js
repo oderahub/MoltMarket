@@ -197,6 +197,7 @@ async function exerciseYieldPayment({
   requestedAsset = null,
   initialYield,
   yieldTxid = `yield-payment-${Date.now()}`,
+  providers = [],
 }) {
   const nativeFetch = globalThis.fetch.bind(globalThis);
   const skill = getSkill("bounty-executor");
@@ -215,7 +216,7 @@ async function exerciseYieldPayment({
       {
         object: skill,
         key: "providers",
-        value: [],
+        value: providers,
       },
     ],
     async () => withSimulatedYield({ getSimulatedYield, resetSimulatedYield }, initialYield, async () => {
@@ -284,6 +285,8 @@ async function main() {
   } = await import("../src/utils/x402.js");
   const {
     recordIncomingPayment,
+    recordDistribution,
+    distributeRevenue,
     getLedger,
     getLedgerSummary,
     listSettlements,
@@ -298,6 +301,7 @@ async function main() {
     completeIntent,
   } = await import("../src/services/intents.js");
   const { getSimulatedYield, resetSimulatedYield } = await import("../src/services/treasury.js");
+  const config = (await import("../src/config.js")).default;
   const router = (await import("../src/routes/api.js")).default;
 
   console.log("\n🧪 MoltMarket v2 Tests\n");
@@ -844,17 +848,61 @@ async function main() {
   });
 
   await test("eligible sBTC yield payment spends simulated yield before execution", async () => {
-    const result = await exerciseYieldPayment({
-      router,
-      getSkill,
-      getIntent,
-      listSettlements,
-      getSimulatedYield,
-      resetSimulatedYield,
-      requestedAsset: "sBTC",
-      initialYield: 1200,
-      yieldTxid: "yield-payment-success",
-    });
+    const bountySkill = getSkill("bounty-executor");
+    const payoutCalls = [];
+    const result = await withPatchedGlobals(
+      [
+        {
+          object: config.providers.a,
+          key: "address",
+          value: "STPROVIDERA0000000000000000000000000000000",
+        },
+        {
+          object: config.providers.c,
+          key: "address",
+          value: "STPROVIDERC0000000000000000000000000000000",
+        },
+        {
+          object: config,
+          key: "platformPrivateKey",
+          value: "platform-private-key-test",
+        },
+        {
+          object: globalThis,
+          key: "__MOLTMARKET_STACKS_UTILS__",
+          value: {
+            deriveAddressFromPrivateKey: () => "STPLATFORMPAYOUTADDRESS00000000000000000",
+            sendSBTC: async ({ recipientAddress, amount, senderKey, senderAddress, memo }) => {
+              payoutCalls.push({
+                recipientAddress,
+                amount: String(amount),
+                senderKey,
+                senderAddress,
+                memo,
+              });
+              const txid = `0xsbtc-payout-${payoutCalls.length}`;
+              return {
+                txid,
+                explorerUrl: `https://explorer.hiro.so/txid/${txid}?chain=testnet`,
+              };
+            },
+          },
+        },
+      ],
+      async () =>
+        exerciseYieldPayment({
+          router,
+          getSkill,
+          getIntent,
+          listSettlements,
+          getSimulatedYield,
+          resetSimulatedYield,
+          requestedAsset: "sBTC",
+          initialYield: 1200,
+          yieldTxid: "yield-payment-success",
+          providers: bountySkill.providers,
+        })
+    );
 
     assertEqual(result.initialBody.settlement.selected.asset, "sBTC");
     assert(result.initialBody.settlement.acceptedProofHeaders.includes("x-yield-payment"));
@@ -866,6 +914,26 @@ async function main() {
     assertEqual(result.intent.settlement.payment.verified, true);
     assertEqual(result.intent.settlement.payment.proofStatus, "yield-helper");
     assertEqual(result.settlements.length, 1);
+    assertEqual(payoutCalls.length, 2);
+    assert(result.body.revenueDistribution.distributions.length >= 1, "expected provider payout records");
+    assert(
+      result.body.revenueDistribution.distributions.every(
+        (distribution) => distribution.status === "broadcasted" && distribution.txid && distribution.explorerUrl
+      ),
+      "sBTC provider payouts should surface broadcast metadata once real payout broadcasting exists"
+    );
+    assert(
+      result.body.transactions
+        .filter((reference) => reference.kind === "distribution")
+        .every((reference) => reference.status === "broadcasted" && reference.explorerReady),
+      "distribution transaction references should surface truthful broadcasted status"
+    );
+    assert(
+      result.settlements[0].distributions.every(
+        (distribution) => distribution.status === "broadcasted" && distribution.txid
+      ),
+      "stored ledger distributions should reflect broadcasted payout status"
+    );
   });
 
   await test("insufficient simulated yield fails closed before execution", async () => {
@@ -988,6 +1056,101 @@ async function main() {
     assertEqual(settlements[0].intentId, "intent-sbtc");
   });
 
+  await test("recordDistribution does not mark payouts broadcasted without txid evidence", () => {
+    const settlement = listSettlements({ txid: "0xt2" })[0];
+    recordDistribution({
+      ledgerEntryId: settlement.id,
+      txid: "",
+      toAddress: "STPROVIDER0000000000000000000000000000000",
+      toName: "provider-a",
+      amount: "500",
+      asset: "sBTC",
+      explorerUrl: "https://explorer.hiro.so/txid/phantom?chain=testnet",
+    });
+
+    const updated = listSettlements({ txid: "0xt2" })[0];
+    const distribution = updated.distributions.at(-1);
+    assertEqual(distribution.status, "recorded");
+    assertEqual(distribution.txid, "");
+    assertEqual(distribution.explorerUrl, null);
+  });
+
+  await test("recordDistribution keeps broadcasted when txid evidence exists", () => {
+    const settlement = listSettlements({ txid: "0xt2" })[0];
+    recordDistribution({
+      ledgerEntryId: settlement.id,
+      txid: "0xpayout-proof",
+      toAddress: "STPROVIDER0000000000000000000000000000000",
+      toName: "provider-b",
+      amount: "250",
+      asset: "sBTC",
+    });
+
+    const updated = listSettlements({ txid: "0xt2" })[0];
+    const distribution = updated.distributions.at(-1);
+    assertEqual(distribution.status, "broadcasted");
+    assertEqual(distribution.txid, "0xpayout-proof");
+  });
+
+  await test("distributeRevenue uses the sBTC broadcast branch instead of recorded-only fallback", async () => {
+    const entry = recordIncomingPayment({
+      txid: "0xsbtc-revenue-entry",
+      from: "STPAYER",
+      amount: "1000",
+      skillId: "alpha-leak",
+      asset: "sBTC",
+      intentId: "intent-sbtc-ledger",
+      settlementMethod: "yield-payment",
+    });
+
+    await withPatchedGlobals(
+      [
+        {
+          object: config,
+          key: "platformPrivateKey",
+          value: "platform-private-key-test",
+        },
+        {
+          object: globalThis,
+          key: "__MOLTMARKET_STACKS_UTILS__",
+          value: {
+            deriveAddressFromPrivateKey: () => "STPLATFORMPAYOUTADDRESS00000000000000000",
+            sendSBTC: async () => ({
+              txid: "0xledger-sbtc-payout",
+              explorerUrl: "https://explorer.hiro.so/txid/0xledger-sbtc-payout?chain=testnet",
+            }),
+          },
+        },
+      ],
+      async () => {
+        const distributions = await distributeRevenue({
+          ledgerEntryId: entry.id,
+          totalAmount: "1000",
+          providers: [
+            {
+              name: "signal-detector",
+              address: "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT",
+              sharePercent: 100,
+            },
+          ],
+          asset: "sBTC",
+        });
+
+        assertEqual(distributions.length, 1);
+        assertEqual(distributions[0].status, "broadcasted");
+        assertEqual(distributions[0].txid, "0xledger-sbtc-payout");
+        assert(distributions[0].explorerUrl, "missing explorer url");
+        assertEqual(distributions[0].note, "Settled via sBTC SIP-010 transfer helper.");
+
+        const storedEntry = getLedger().find((item) => item.id === entry.id);
+        assert(storedEntry, "missing ledger entry");
+        assertEqual(storedEntry.distributions.length, 1);
+        assertEqual(storedEntry.distributions[0].status, "broadcasted");
+        assertEqual(storedEntry.distributions[0].txid, "0xledger-sbtc-payout");
+      }
+    );
+  });
+
   await test("getLedger returns entries", () => {
     assert(Array.isArray(getLedger()));
     assert(getLedger().length >= 2);
@@ -995,9 +1158,9 @@ async function main() {
 
   await test("getLedgerSummary computes per-asset totals", () => {
     const s = getLedgerSummary();
-    assertEqual(s.totalPayments, 5);
+    assertEqual(s.totalPayments, 6);
     assertEqual(s.totalIncomingMicroSTX, "5000");
-    assertEqual(s.totalsByAsset.sBTC.incoming, "1800");
+    assertEqual(s.totalsByAsset.sBTC.incoming, "2800");
     assertEqual(s.totalsByAsset.USDCx.incoming, "20000");
   });
 

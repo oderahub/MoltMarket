@@ -24,8 +24,10 @@ MoltMarket V2 keeps the existing Express/x402 engine as the source of truth and 
 - **Intent-linked execution:** the Next.js chat client now forwards `x-intent-id` so backend execution can validate payment proofs against the staged intent instead of a loose client-side quote.
 - **Quote-level txid verification:** direct `x-payment-txid` proof now checks the staged settlement asset, contract, transfer function, amount, and `payTo` recipient before execution unlocks.
 - **Yield guardrails:** `x-yield-payment` is only valid for `sBTC` settlement quotes, and simulated yield is debited before the skill run proceeds.
+- **Truthful payout reporting:** provider distribution records only report `broadcasted` when payout `txid` evidence exists; otherwise they remain `recorded` and do not advertise explorer metadata.
+- **sBTC payout helper path:** `sBTC` provider payouts now use the real SIP-010 broadcast helper path and surface `txid`/explorer metadata only when the helper returns it.
 - **Registry continuity:** payment-required responses now persist the selected settlement onto the intent record so registry and attestation endpoints reflect the exact quote the client attempted to settle.
-- **Regression coverage:** the backend test suite now exercises wrong-amount, wrong-recipient, wrong-intent, pending-proof, and yield-insufficient paths in addition to the happy path.
+- **Regression coverage:** the backend test suite now exercises wrong-amount, wrong-recipient, wrong-intent, pending-proof, yield-insufficient, payout-status fallback, and `sBTC` payout-helper paths in addition to the happy path.
 
 ---
 
@@ -171,6 +173,12 @@ npm run negotiate
 - `payment-signature`: standard x402 signed-payment flow.
 - `x-payment-txid`: accepted only when the on-chain transaction matches the staged intent, settlement asset or contract, transfer amount, and destination address.
 - `x-yield-payment`: accepted only for `sBTC` quotes, with simulated yield balance checks before execution.
+
+Provider payout reporting now follows the same evidence-first rule:
+
+- Distribution status is only `broadcasted` when a payout `txid` exists.
+- If no payout `txid` is available, the payout stays `recorded` and no explorer URL is implied.
+- For `sBTC` settlements, provider payouts go through the `sendSBTC` helper path and expose broadcast metadata only when that helper returns a `txid`.
 
 Common rejection states exposed through `payment-response` and 402 retries:
 

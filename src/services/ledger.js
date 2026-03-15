@@ -45,6 +45,41 @@ function saveLedger(entries) {
 // In-memory ledger, initialized from disk
 let entries = loadLedger();
 
+function normalizeDistributionTxid(txid) {
+  if (typeof txid === "string") return txid.trim();
+  if (txid === null || txid === undefined) return "";
+  return String(txid).trim();
+}
+
+export function resolveDistributionStatus({ status, txid, error } = {}) {
+  const normalizedTxid = normalizeDistributionTxid(txid);
+
+  if (status === "broadcasted") {
+    return normalizedTxid ? "broadcasted" : error ? "failed" : "recorded";
+  }
+
+  if (status) return status;
+  if (normalizedTxid) return "broadcasted";
+  if (error) return "failed";
+  return "recorded";
+}
+
+async function getStacksUtils() {
+  return globalThis.__MOLTMARKET_STACKS_UTILS__ || import("../utils/stacks.js");
+}
+
+function buildBroadcastedDistribution({ provider, providerAmount, asset, txid, explorerUrl, note = "" }) {
+  return {
+    name: provider.name,
+    txid,
+    amount: providerAmount.toString(),
+    asset,
+    explorerUrl,
+    status: resolveDistributionStatus({ txid }),
+    ...(note ? { note } : {}),
+  };
+}
+
 /**
  * Records a payment received from an agent.
  */
@@ -90,20 +125,23 @@ export function recordDistribution({
   toName,
   amount,
   asset = "STX",
-  status = "broadcasted",
+  status,
   explorerUrl = null,
   note = "",
+  error = null,
 }) {
+  const normalizedTxid = normalizeDistributionTxid(txid);
+  const normalizedStatus = resolveDistributionStatus({ status, txid: normalizedTxid, error });
   const entry = entries.find((e) => e.id === ledgerEntryId);
   if (entry) {
     entry.distributions.push({
-      txid,
+      txid: normalizedTxid,
       toAddress,
       toName,
       amount: String(amount),
       asset,
-      status,
-      explorerUrl,
+      status: normalizedStatus,
+      explorerUrl: normalizedTxid ? explorerUrl || null : null,
       note,
       timestamp: new Date().toISOString(),
     });
@@ -229,7 +267,8 @@ export async function distributeRevenue({ ledgerEntryId, totalAmount, providers,
 
     try {
       if (asset === "USDCx") {
-        const { deriveAddressFromPrivateKey, sendUSDCx } = await import("../utils/stacks.js");
+        const { deriveAddressFromPrivateKey, sendUSDCx } = await getStacksUtils();
+        const note = "Settled via USDCx SIP-010 transfer helper.";
         const result = await sendUSDCx({
           recipientAddress: provider.address,
           amount: providerAmount,
@@ -238,33 +277,85 @@ export async function distributeRevenue({ ledgerEntryId, totalAmount, providers,
           memo: `moltmarket:${provider.name}`,
         });
 
+        const txid = normalizeDistributionTxid(result?.txid);
+        const explorerUrl = txid ? result?.explorerUrl || null : null;
+        const status = resolveDistributionStatus({ txid });
+
         recordDistribution({
           ledgerEntryId,
-          txid: result.txid,
+          txid,
           toAddress: provider.address,
           toName: provider.name,
           amount: providerAmount.toString(),
           asset,
-          explorerUrl: result.explorerUrl,
-          note: "Settled via USDCx SIP-010 transfer helper.",
+          status,
+          explorerUrl,
+          note,
         });
 
-        results.push({
-          name: provider.name,
-          txid: result.txid,
+        results.push(buildBroadcastedDistribution({
+          provider,
+          providerAmount,
+          asset,
+          txid,
+          explorerUrl,
+          note,
+        }));
+
+        if (status === "broadcasted") {
+          log.success("Ledger", `Paid provider ${provider.name}: ${providerAmount} ${asset}`);
+        } else {
+          log.warn("Ledger", `Recorded ${asset} payout for ${provider.name} without broadcast evidence.`);
+        }
+        continue;
+      }
+
+      if (asset === "sBTC") {
+        const { deriveAddressFromPrivateKey, sendSBTC } = await getStacksUtils();
+        const note = "Settled via sBTC SIP-010 transfer helper.";
+        const result = await sendSBTC({
+          recipientAddress: provider.address,
+          amount: providerAmount,
+          senderKey: config.platformPrivateKey,
+          senderAddress: deriveAddressFromPrivateKey(config.platformPrivateKey, config.stacksNetwork),
+          memo: `moltmarket:${provider.name}`,
+        });
+
+        const txid = normalizeDistributionTxid(result?.txid);
+        const explorerUrl = txid ? result?.explorerUrl || null : null;
+        const status = resolveDistributionStatus({ txid });
+
+        recordDistribution({
+          ledgerEntryId,
+          txid,
+          toAddress: provider.address,
+          toName: provider.name,
           amount: providerAmount.toString(),
           asset,
-          explorerUrl: result.explorerUrl,
-          status: "broadcasted",
-          note: "Settled via USDCx SIP-010 transfer helper.",
+          status,
+          explorerUrl,
+          note,
         });
 
-        log.success("Ledger", `Paid provider ${provider.name}: ${providerAmount} ${asset}`);
+        results.push(buildBroadcastedDistribution({
+          provider,
+          providerAmount,
+          asset,
+          txid,
+          explorerUrl,
+          note,
+        }));
+
+        if (status === "broadcasted") {
+          log.success("Ledger", `Paid provider ${provider.name}: ${providerAmount} ${asset}`);
+        } else {
+          log.warn("Ledger", `Recorded ${asset} payout for ${provider.name} without broadcast evidence.`);
+        }
         continue;
       }
 
       if (asset !== "STX") {
-        const note = `Provider payout recorded for ${asset}; automatic settlement is only implemented for STX.`;
+        const note = `Provider payout recorded for ${asset}; automatic settlement is only implemented for STX, sBTC, and USDCx.`;
         recordDistribution({
           ledgerEntryId,
           txid: "",
@@ -295,25 +386,35 @@ export async function distributeRevenue({ ledgerEntryId, totalAmount, providers,
         memo: `moltmarket:${provider.name}`,
       });
 
+      const txid = normalizeDistributionTxid(result?.txid);
+      const explorerUrl = txid ? result?.explorerUrl || null : null;
+      const status = resolveDistributionStatus({ txid });
+
       recordDistribution({
         ledgerEntryId,
-        txid: result.txid,
+        txid,
         toAddress: provider.address,
         toName: provider.name,
         amount: providerAmount.toString(),
         asset,
-        explorerUrl: result.explorerUrl,
+        status,
+        explorerUrl,
       });
 
       results.push({
         name: provider.name,
-        txid: result.txid,
+        txid,
         amount: providerAmount.toString(),
         asset,
-        explorerUrl: result.explorerUrl,
+        explorerUrl,
+        status,
       });
 
-      log.success("Ledger", `Paid provider ${provider.name}: ${providerAmount} microSTX`);
+      if (status === "broadcasted") {
+        log.success("Ledger", `Paid provider ${provider.name}: ${providerAmount} microSTX`);
+      } else {
+        log.warn("Ledger", `Recorded STX payout for ${provider.name} without broadcast evidence.`);
+      }
     } catch (err) {
       log.error("Ledger", `Failed to pay provider ${provider.name}: ${err.message}`);
       results.push({
@@ -321,6 +422,8 @@ export async function distributeRevenue({ ledgerEntryId, totalAmount, providers,
         error: err.message,
         amount: providerAmount.toString(),
         asset,
+        status: resolveDistributionStatus({ error: err.message }),
+        note: `Provider payout failed: ${err.message}`,
       });
     }
   }
