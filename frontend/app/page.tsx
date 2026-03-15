@@ -37,11 +37,26 @@ export default function BloombergTerminal() {
     () =>
       new DefaultChatTransport({
         api: '/api/chat',
-        prepareSendMessagesRequest: ({ body, headers, credentials, api }) => ({
+        prepareSendMessagesRequest: ({
+          id,
+          messages,
+          requestMetadata,
+          body,
+          headers,
+          credentials,
+          api,
+          trigger,
+          messageId,
+        }) => ({
           api,
           headers,
           credentials,
           body: {
+            id,
+            messages,
+            requestMetadata,
+            trigger,
+            messageId,
             ...body,
             executionContext: {
               ...(walletAddress ? { walletAddress } : {}),
