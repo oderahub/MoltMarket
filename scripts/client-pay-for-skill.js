@@ -16,9 +16,10 @@
 import pkg from "@stacks/transactions";
 const { makeSTXTokenTransfer } = pkg;
 import dotenv from "dotenv";
+import { resolveServerUrl } from "./_server-url.js";
 dotenv.config();
 
-const BASE_URL = process.env.SERVER_URL || "http://localhost:3000";
+const BASE_URL = resolveServerUrl();
 const AGENT_KEY = process.env.DEMO_AGENT_PRIVATE_KEY;
 const AGENT_ADDRESS = process.env.DEMO_AGENT_ADDRESS;
 const SKILL_ID = process.env.SKILL_ID || "wallet-auditor";

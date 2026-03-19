@@ -6,7 +6,9 @@
  * Prereq: Server running (npm start)
  */
 
-const BASE_URL = process.env.SERVER_URL || "http://localhost:3000";
+import { resolveServerUrl } from "./_server-url.js";
+
+const BASE_URL = resolveServerUrl();
 
 async function main() {
   console.log("🤖 MoltMarket Agent — Discovery Flow\n");

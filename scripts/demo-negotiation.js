@@ -18,23 +18,9 @@ import pkg from "@stacks/transactions";
 const { makeSTXTokenTransfer, broadcastTransaction, AnchorMode } = pkg;
 import { STACKS_TESTNET, STACKS_MAINNET } from "@stacks/network";
 import dotenv from "dotenv";
+import { resolveServerUrl } from "./_server-url.js";
 dotenv.config();
-
-function normalizeBaseUrl(value) {
-  const raw = value || "http://127.0.0.1:3000";
-
-  try {
-    const url = new URL(raw);
-    if (url.hostname === "localhost") {
-      url.hostname = "127.0.0.1";
-    }
-    return url.toString().replace(/\/$/, "");
-  } catch {
-    return raw;
-  }
-}
-
-const BASE_URL = normalizeBaseUrl(process.env.SERVER_URL);
+const BASE_URL = resolveServerUrl();
 const AGENT_KEY = process.env.DEMO_AGENT_PRIVATE_KEY;
 const NETWORK_NAME = process.env.STACKS_NETWORK || "testnet";
 const NETWORK = NETWORK_NAME === "mainnet" ? STACKS_MAINNET : STACKS_TESTNET;
@@ -129,6 +115,8 @@ async function main() {
   console.log("═".repeat(60));
   console.log("  MoltMarket — Autonomous Agent Economy Demo");
   console.log("  7-Step Flow: Discovery → Negotiation → Yield Payment → Execution");
+  console.log("═".repeat(60));
+  console.log(`  Backend: ${BASE_URL}`);
   console.log("═".repeat(60));
 
   if (!AGENT_KEY) {
