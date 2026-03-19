@@ -338,12 +338,13 @@ async function main() {
     anchorMode: AnchorMode.Any,
   });
 
+  const txHex = Buffer.from(tx.serialize()).toString("hex");
   const encodedPayment = Buffer.from(
     JSON.stringify({
       x402Version: 2,
       scheme: "exact",
       network: NETWORK_NAME === "mainnet" ? "stacks:1" : "stacks:2147483648",
-      payload: { transaction: tx.serialize() },
+      payload: { transaction: txHex },
     }),
     "utf-8"
   ).toString("base64");
