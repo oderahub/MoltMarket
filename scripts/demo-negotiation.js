@@ -15,7 +15,7 @@
  */
 
 import pkg from "@stacks/transactions";
-const { makeSTXTokenTransfer, broadcastTransaction, AnchorMode } = pkg;
+const { makeSTXTokenTransfer, AnchorMode, getAddressFromPrivateKey } = pkg;
 import { STACKS_TESTNET, STACKS_MAINNET } from "@stacks/network";
 import dotenv from "dotenv";
 import { resolveServerUrl } from "./_server-url.js";
@@ -23,6 +23,7 @@ dotenv.config();
 const BASE_URL = resolveServerUrl();
 const AGENT_KEY = process.env.DEMO_AGENT_PRIVATE_KEY;
 const NETWORK_NAME = process.env.STACKS_NETWORK || "testnet";
+const AGENT_ADDRESS = AGENT_KEY ? getAddressFromPrivateKey(AGENT_KEY, NETWORK_NAME) : null;
 const NETWORK = NETWORK_NAME === "mainnet" ? STACKS_MAINNET : STACKS_TESTNET;
 
 // Demo agent addresses for trust display
@@ -264,7 +265,7 @@ async function main() {
   await sleep(1000);
 
   // Spend yield for payment
-  console.log(`   [YIELD_ENGINE] Routing 800 sats to x402 payment...`);
+  console.log(`   [YIELD_ENGINE] Routing 800 sats to treasury-backed execution budget...`);
 
   const spendRes = await fetch(`${BASE_URL}/treasury/yield/spend`, {
     method: "POST",
@@ -274,7 +275,7 @@ async function main() {
   const spendData = await spendRes.json();
 
   if (spendData.success) {
-    console.log(`   ✅ [SUCCESS] Paid via YIELD — principal 100% preserved!`);
+    console.log(`   ✅ [SUCCESS] Yield reserve earmarked — principal 100% preserved!`);
     console.log(`   Remaining yield: ${spendData.remaining} sats`);
     await broadcastLog(6, "success", `Paid 800 sats via yield! Remaining: ${spendData.remaining}`);
   } else {
@@ -282,17 +283,23 @@ async function main() {
     await broadcastLog(6, "info", "Insufficient yield — using direct STX payment");
   }
 
-  console.log(`   [${AGENT_B.name}] "Agent pays with staking yield, not capital!"`);
+  console.log(`   [${AGENT_B.name}] "Yield reserve approved. Settling onchain for public proof."`);
 
   await sleep(1500);
 
-  // Also do a REAL STX broadcast for on-chain proof
-  console.log(`\n   Additionally broadcasting STX payment for on-chain proof...`);
+  // Prepare a REAL STX settlement for on-chain proof
+  console.log(`\n   Preparing STX settlement for on-chain proof...`);
 
   const res402 = await fetch(`${BASE_URL}/skills/bounty-executor/execute`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ task: "wallet-activity" }),
+    headers: {
+      "Content-Type": "application/json",
+      "x-payment-asset": "STX",
+    },
+    body: JSON.stringify({
+      task: "wallet-activity",
+      address: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
+    }),
   });
 
   if (res402.status !== 402) {
@@ -300,10 +307,27 @@ async function main() {
   }
 
   const req = await res402.json();
-  const payTo = req.accepts?.[0]?.payTo;
-  const amount = BigInt(req.accepts?.[0]?.amount || "8000");
+  const selectedSettlement =
+    req.accepts?.find((option) => option?.asset === "STX") || req.accepts?.[0] || null;
+  const payTo = selectedSettlement?.payTo;
+  const amount = BigInt(selectedSettlement?.amount || "8000");
 
   console.log(`   Creating STX transfer: ${amount} microSTX → ${payTo}`);
+
+  if (!AGENT_ADDRESS) {
+    throw new Error("DEMO_AGENT_PRIVATE_KEY did not resolve to a valid Stacks address.");
+  }
+
+  if (!payTo) {
+    throw new Error("Missing STX settlement quote for bounty-executor.");
+  }
+
+  if (AGENT_ADDRESS === payTo) {
+    throw new Error(
+      `Demo agent wallet (${AGENT_ADDRESS}) matches platform recipient (${payTo}). ` +
+        "Set DEMO_AGENT_PRIVATE_KEY to a separate funded wallet to produce real on-chain proof."
+    );
+  }
 
   const tx = await makeSTXTokenTransfer({
     recipient: payTo,
@@ -314,21 +338,19 @@ async function main() {
     anchorMode: AnchorMode.Any,
   });
 
-  console.log(`   🚀 Broadcasting to Stacks blockchain...`);
-  const broadcastResult = await broadcastTransaction({ transaction: tx, network: NETWORK });
+  const encodedPayment = Buffer.from(
+    JSON.stringify({
+      x402Version: 2,
+      scheme: "exact",
+      network: NETWORK_NAME === "mainnet" ? "stacks:1" : "stacks:2147483648",
+      payload: { transaction: tx.serialize() },
+    }),
+    "utf-8"
+  ).toString("base64");
 
   let txid = null;
   let executionSucceeded = false;
-  let finalStatusLine = "STEP 7: Execution blocked before payment proof matched the selected settlement.";
-  if (broadcastResult.error) {
-    console.log(`   ⚠️  Broadcast error: ${broadcastResult.reason || broadcastResult.error}`);
-    txid = "pending-demo-tx";
-  } else {
-    txid = broadcastResult.txid;
-    console.log(`   ✅ Transaction broadcast!`);
-    highlightLink("TRANSACTION PROOF", explorerUrl(txid));
-    await broadcastLog(6, "success", `TX broadcast: ${explorerUrl(txid)}`);
-  }
+  let finalStatusLine = "STEP 7: Execution blocked before on-chain payment verification completed.";
 
   await sleep(1500);
 
@@ -341,12 +363,13 @@ async function main() {
   console.log(`   [${AGENT_B.name}] "Payment confirmed! Executing skill..."`);
   await sleep(500);
 
-  // Execute with yield payment header
+  // Execute with real signed STX payment
   const execRes = await fetch(`${BASE_URL}/skills/bounty-executor/execute`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-Yield-Payment": `yield-payment-${Date.now()}`,
+      "x-payment-asset": "STX",
+      "payment-signature": encodedPayment,
     },
     body: JSON.stringify({
       task: "wallet-activity",
@@ -358,8 +381,13 @@ async function main() {
 
   if (execRes.ok && result.success) {
     executionSucceeded = true;
-    finalStatusLine = "STEP 7: Skill executed, revenue distributed";
+    txid = result.payment?.txid || null;
+    finalStatusLine = "STEP 7: Skill executed with verified on-chain payment proof";
     console.log(`   ✅ Skill executed successfully!`);
+    if (txid) {
+      highlightLink("TRANSACTION PROOF", result.payment?.explorerUrl || explorerUrl(txid));
+      await broadcastLog(7, "success", `TX broadcast: ${result.payment?.explorerUrl || explorerUrl(txid)}`);
+    }
 
     if (result.output?.result) {
       const r = result.output.result;
@@ -402,7 +430,7 @@ async function main() {
   console.log(`      STEP 3: Agent B verified: Trust ${trustData.score} (${trustData.tier})`);
   console.log("      STEP 4: Agent B counter-offered @ 8000 microSTX");
   console.log("      STEP 5: Agent A accepted via PATCH /bounties/:id");
-  console.log("      STEP 6: Agent B paid with StackingDAO YIELD (not capital!)");
+  console.log("      STEP 6: Agent B earmarked treasury yield and prepared public settlement proof");
   console.log(`      ${finalStatusLine}`);
   console.log("");
   console.log("   Key differentiators:");
@@ -419,7 +447,7 @@ async function main() {
 
   console.log(
     executionSucceeded
-      ? "   'That's not a simulation. That's a self-funding autonomous economy.'\n"
+      ? "   'That's not a simulation. That's a self-funding autonomous economy with verifiable on-chain proof.'\n"
       : "   'The demo halted honestly at payment verification instead of claiming a false success.'\n"
   );
 
