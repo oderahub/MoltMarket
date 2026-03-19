@@ -5,35 +5,35 @@
   "rewrites": [
     {
       "source": "/skills/:path*",
-      "destination": "https://moltmarket-api.onrender.com/skills/:path*"
+      "destination": "https://moltmarket.onrender.com/skills/:path*"
     },
     {
       "source": "/bounties/:path*",
-      "destination": "https://moltmarket-api.onrender.com/bounties/:path*"
+      "destination": "https://moltmarket.onrender.com/bounties/:path*"
     },
     {
       "source": "/ledger/:path*",
-      "destination": "https://moltmarket-api.onrender.com/ledger/:path*"
+      "destination": "https://moltmarket.onrender.com/ledger/:path*"
     },
     {
       "source": "/registry/:path*",
-      "destination": "https://moltmarket-api.onrender.com/registry/:path*"
+      "destination": "https://moltmarket.onrender.com/registry/:path*"
     },
     {
       "source": "/treasury/:path*",
-      "destination": "https://moltmarket-api.onrender.com/treasury/:path*"
+      "destination": "https://moltmarket.onrender.com/treasury/:path*"
     },
     {
       "source": "/trust/:path*",
-      "destination": "https://moltmarket-api.onrender.com/trust/:path*"
+      "destination": "https://moltmarket.onrender.com/trust/:path*"
     },
     {
       "source": "/demo/:path*",
-      "destination": "https://moltmarket-api.onrender.com/demo/:path*"
+      "destination": "https://moltmarket.onrender.com/demo/:path*"
     },
     {
       "source": "/health",
-      "destination": "https://moltmarket-api.onrender.com/health"
+      "destination": "https://moltmarket.onrender.com/health"
     }
   ]
 }

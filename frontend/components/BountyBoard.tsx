@@ -1,8 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { buildApiUrl } from '@/lib/runtime';
 
 
 type Bounty = {
@@ -22,17 +21,20 @@ export default function BountyBoard({ onNegotiate }: { onNegotiate: (newPrice: n
   // Fetch or create bounty on mount
   useEffect(() => {
     const initBounty = async () => {
-      // Check for existing bounties
-      const res = await fetch(`${API_BASE}/bounties`);
-      const data = await res.json();
+      try {
+        const res = await fetch(buildApiUrl('/bounties'));
+        const data = await res.json();
 
-      if (data.bounties && data.bounties.length > 0) {
-        const b = data.bounties[0];
-        setBounty(b);
-        setReward(parseInt(b.reward) || 5000);
-      } else {
-        // Create demo bounty
-        const createRes = await fetch(`${API_BASE}/bounties`, {
+        if (Array.isArray(data.bounties) && data.bounties.length > 0) {
+          const b = data.bounties[0];
+          if (typeof b?.id === 'string') {
+            setBounty(b);
+            setReward(parseInt(b.reward) || 5000);
+            return;
+          }
+        }
+
+        const createRes = await fetch(buildApiUrl('/bounties'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -42,9 +44,16 @@ export default function BountyBoard({ onNegotiate }: { onNegotiate: (newPrice: n
             postedBy: "agent-alpha"
           }),
         });
-        const newBounty = await createRes.json();
-        setBounty(newBounty);
-        setReward(5000);
+        const created = await createRes.json();
+        const newBounty = created?.bounty ?? created;
+        if (typeof newBounty?.id === 'string') {
+          setBounty(newBounty);
+          setReward(parseInt(newBounty.reward) || 5000);
+        } else {
+          setStatus("BOUNTY LOAD FAILED");
+        }
+      } catch {
+        setStatus("BOUNTY LOAD FAILED");
       }
     };
     initBounty().catch(console.error);
@@ -59,7 +68,7 @@ export default function BountyBoard({ onNegotiate }: { onNegotiate: (newPrice: n
     setTimeout(async () => {
       try {
         // Actually update bounty via API
-        const res = await fetch(`${API_BASE}/bounties/${bounty.id}`, {
+        const res = await fetch(buildApiUrl(`/bounties/${bounty.id}`), {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ reward: "8000" }),
@@ -91,7 +100,9 @@ export default function BountyBoard({ onNegotiate }: { onNegotiate: (newPrice: n
         <div className="p-4 border-b border-terminal-border flex justify-between items-center bg-white/[0.02]">
           <div>
             <h3 className="text-sm font-bold uppercase tracking-tight">
-              {bounty ? `#${bounty.id.replace('bounty-', '')}: ${bounty.title}` : '#104: Composite Deep-Wallet Audit'}
+              {bounty && typeof bounty.id === 'string'
+                ? `#${bounty.id.replace('bounty-', '')}: ${bounty.title}`
+                : '#104: Composite Deep-Wallet Audit'}
             </h3>
             <p className="text-[10px] text-white/40 font-sans mt-1">
               {bounty?.description || 'Requires Risk-Score + Multi-Hop Distribution'}

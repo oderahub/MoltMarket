@@ -12,8 +12,7 @@ import OperatorConnect from '@/components/OperatorConnect';
 import AgentTreasury from '@/components/AgentTreasury';
 import ChatShell from '@/components/ChatShell';
 import { NETWORK, PLATFORM_ADDRESS, getExplorerTxUrl } from '@/lib/stacks';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { buildApiUrl } from '@/lib/runtime';
 
 type Skill = {
   id: string;
@@ -75,7 +74,7 @@ export default function BloombergTerminal() {
 
   // Fetch skills from backend on mount
   useEffect(() => {
-    fetch(`${API_BASE}/skills`)
+    fetch(buildApiUrl('/skills'))
       .then(res => res.json())
       .then(data => {
         setSkills(data.skills || []);
@@ -129,7 +128,7 @@ export default function BloombergTerminal() {
 
       addLog(`[PAYMENT] Using ${isYieldPayment ? 'x-yield-payment' : 'x-payment-txid'} proof header`, 'info');
 
-      const res = await fetch(`${API_BASE}/skills/${skillId}/execute`, {
+      const res = await fetch(buildApiUrl(`/skills/${skillId}/execute`), {
         method: 'POST',
         headers,
       });
@@ -159,7 +158,7 @@ export default function BloombergTerminal() {
     addLog(`[STACKING_DAO] Cycle 114 yield available: ${yieldSats} sats`, 'info');
 
     try {
-      const res = await fetch(`${API_BASE}/treasury/yield/spend`, {
+      const res = await fetch(buildApiUrl('/treasury/yield/spend'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: priceSats }),
@@ -203,7 +202,7 @@ export default function BloombergTerminal() {
 
     try {
       // Call backend - will return 402 without payment header
-      const res = await fetch(`${API_BASE}/skills/${skillId}/execute`, {
+      const res = await fetch(buildApiUrl(`/skills/${skillId}/execute`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -287,7 +286,7 @@ export default function BloombergTerminal() {
     addLog('Using funded bot wallets - transactions are REAL!', 'info');
 
     try {
-      const res = await fetch(`${API_BASE}/demo/start`, {
+      const res = await fetch(buildApiUrl('/demo/start'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type }),

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { getWebSocketUrl } from '@/lib/runtime';
 
 export type LogEntry = {
   type: 'info' | 'success' | 'error' | 'agent' | 'system';
@@ -20,12 +21,7 @@ export function useTerminal() {
   }, []);
 
   useEffect(() => {
-    const explicitWsUrl = process.env.NEXT_PUBLIC_WS_URL;
-    const baseUrl = explicitWsUrl || process.env.NEXT_PUBLIC_API_URL || window.location.origin;
-    const wsUrl = /^wss?:\/\//.test(baseUrl)
-      ? baseUrl
-      : `${baseUrl.startsWith('https') ? 'wss' : 'ws'}://${baseUrl.replace(/^https?:\/\//, '')}/ws`;
-
+    const wsUrl = getWebSocketUrl();
     const ws = new WebSocket(wsUrl);
 
     ws.onmessage = (event) => {
