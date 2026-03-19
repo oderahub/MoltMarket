@@ -338,6 +338,7 @@ async function main() {
   }
 
   const req = await res402.json();
+  const intentId = res402.headers.get("x-intent-id") || req.intent?.id || null;
   const selectedSettlement =
     req.accepts?.find((option) => option?.asset === "STX") || req.accepts?.[0] || null;
   const payTo = selectedSettlement?.payTo;
@@ -351,6 +352,10 @@ async function main() {
 
   if (!payTo) {
     throw new Error("Missing STX settlement quote for bounty-executor.");
+  }
+
+  if (!intentId) {
+    throw new Error("Missing staged x-intent-id for bounty-executor payment proof.");
   }
 
   if (AGENT_ADDRESS === payTo) {
@@ -405,9 +410,11 @@ async function main() {
     headers: {
       "Content-Type": "application/json",
       "x-payment-asset": "STX",
+      "x-intent-id": intentId,
       "x-payment-txid": txid,
     },
     body: JSON.stringify({
+      intentId,
       task: "wallet-activity",
       address: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
     }),
