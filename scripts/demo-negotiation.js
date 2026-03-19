@@ -19,6 +19,7 @@ const { makeSTXTokenTransfer, AnchorMode, getAddressFromPrivateKey } = pkg;
 import { STACKS_TESTNET, STACKS_MAINNET } from "@stacks/network";
 import dotenv from "dotenv";
 import { resolveServerUrl } from "./_server-url.js";
+import { broadcast, getTransactionStatus } from "../src/utils/stacks.js";
 dotenv.config();
 const BASE_URL = resolveServerUrl();
 const AGENT_KEY = process.env.DEMO_AGENT_PRIVATE_KEY;
@@ -50,6 +51,36 @@ function highlightLink(label, url) {
 function explorerUrl(txid) {
   const chain = NETWORK_NAME === "mainnet" ? "" : "?chain=testnet";
   return `https://explorer.hiro.so/txid/${txid}${chain}`;
+}
+
+async function waitForOnChainSuccess(txid, timeoutMs = 120000, intervalMs = 3000) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    try {
+      const tx = await getTransactionStatus(txid);
+
+      if (tx.tx_status === "success") {
+        return tx;
+      }
+
+      if (tx.tx_status && tx.tx_status !== "pending") {
+        throw new Error(`Broadcast tx ${txid} settled with status: ${tx.tx_status}`);
+      }
+    } catch (error) {
+      const message = error?.message || "";
+      const isNotFoundYet =
+        message.includes("404") || message.includes("Not Found") || message.includes("not found");
+
+      if (!isNotFoundYet) {
+        throw error;
+      }
+    }
+
+    await sleep(intervalMs);
+  }
+
+  throw new Error(`Timed out waiting for Hiro confirmation for tx ${txid}.`);
 }
 
 function summarizeAcceptedProofHeaders(result) {
@@ -307,7 +338,6 @@ async function main() {
   }
 
   const req = await res402.json();
-  const paymentResource = req.resource || null;
   const selectedSettlement =
     req.accepts?.find((option) => option?.asset === "STX") || req.accepts?.[0] || null;
   const payTo = selectedSettlement?.payTo;
@@ -339,20 +369,24 @@ async function main() {
     anchorMode: AnchorMode.Any,
   });
 
-  const txHex = Buffer.from(tx.serialize()).toString("hex");
-  const encodedPayment = Buffer.from(
-    JSON.stringify({
-      x402Version: 2,
-      resource: paymentResource,
-      accepted: selectedSettlement,
-      payload: { transaction: txHex },
-    }),
-    "utf-8"
-  ).toString("base64");
-
   let txid = null;
   let executionSucceeded = false;
   let finalStatusLine = "STEP 7: Execution blocked before on-chain payment verification completed.";
+
+  const broadcastResult = await broadcast(tx);
+  txid = broadcastResult?.txid || null;
+
+  if (!txid) {
+    throw new Error("Broadcast did not return a transaction id.");
+  }
+
+  console.log(`   Broadcast submitted: ${txid}`);
+  highlightLink("PENDING TRANSACTION", explorerUrl(txid));
+  await broadcastLog(6, "success", `Broadcast submitted: ${explorerUrl(txid)}`);
+
+  console.log(`   Waiting for Hiro confirmation before execution unlock...`);
+  await waitForOnChainSuccess(txid);
+  console.log(`   ✅ Hiro confirmed payment transaction: ${txid}`);
 
   await sleep(1500);
 
@@ -365,13 +399,13 @@ async function main() {
   console.log(`   [${AGENT_B.name}] "Payment confirmed! Executing skill..."`);
   await sleep(500);
 
-  // Execute with real signed STX payment
+  // Execute with verified on-chain txid proof
   const execRes = await fetch(`${BASE_URL}/skills/bounty-executor/execute`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "x-payment-asset": "STX",
-      "payment-signature": encodedPayment,
+      "x-payment-txid": txid,
     },
     body: JSON.stringify({
       task: "wallet-activity",
