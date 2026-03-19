@@ -5,12 +5,18 @@ services:
     runtime: node
     buildCommand: npm install
     startCommand: npm start
+    disk:
+      name: moltmarket-data
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 3000
+      - key: HOST
+        value: 0.0.0.0
       - key: STACKS_NETWORK
+        sync: false
+      - key: STACKS_API_URL
         sync: false
       - key: PLATFORM_ADDRESS
         sync: false
@@ -18,6 +24,22 @@ services:
         sync: false
       - key: PLATFORM_PRIVATE_KEY
         sync: false
+      - key: PROVIDER_A_PRIVATE_KEY
+        sync: false
+      - key: PROVIDER_A_ADDRESS
+        sync: false
+      - key: PROVIDER_B_PRIVATE_KEY
+        sync: false
+      - key: PROVIDER_B_ADDRESS
+        sync: false
+      - key: PROVIDER_C_PRIVATE_KEY
+        sync: false
+      - key: PROVIDER_C_ADDRESS
+        sync: false
+      - key: MOLTMARKET_LEDGER_FILE
+        value: /var/data/ledger.json
+      - key: MOLTMARKET_INTENT_FILE
+        value: /var/data/intents.json
       - key: FACILITATOR_URL
         sync: false
     healthCheckPath: /health
