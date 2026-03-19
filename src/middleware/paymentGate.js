@@ -537,7 +537,7 @@ export function paymentGate({
 
     const middlewareConfig = {
       amount: BigInt(selectedSettlement.amount),
-      address: config.platformAddress,
+      payTo: config.platformAddress,
       network: config.stacksNetwork,
       facilitatorUrl: config.facilitatorUrl || DEFAULT_FACILITATOR,
       description,
