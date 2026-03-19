@@ -307,6 +307,7 @@ async function main() {
   }
 
   const req = await res402.json();
+  const paymentResource = req.resource || null;
   const selectedSettlement =
     req.accepts?.find((option) => option?.asset === "STX") || req.accepts?.[0] || null;
   const payTo = selectedSettlement?.payTo;
@@ -342,8 +343,8 @@ async function main() {
   const encodedPayment = Buffer.from(
     JSON.stringify({
       x402Version: 2,
-      scheme: "exact",
-      network: NETWORK_NAME === "mainnet" ? "stacks:1" : "stacks:2147483648",
+      resource: paymentResource,
+      accepted: selectedSettlement,
       payload: { transaction: txHex },
     }),
     "utf-8"
